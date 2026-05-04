@@ -15,17 +15,23 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
 
     public PresentationEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
+        _client = factory
+            .WithWebHostBuilder(builder =>
             {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-                var dbName = $"TestDb-{Guid.NewGuid()}";
-                services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-            });
-        }).CreateClient();
+                builder.ConfigureServices(services =>
+                {
+                    var descriptor = services.SingleOrDefault(d =>
+                        d.ServiceType == typeof(DbContextOptions<AppDbContext>)
+                    );
+                    if (descriptor != null)
+                        services.Remove(descriptor);
+                    var dbName = $"TestDb-{Guid.NewGuid()}";
+                    services.AddDbContext<AppDbContext>(options =>
+                        options.UseInMemoryDatabase(dbName)
+                    );
+                });
+            })
+            .CreateClient();
     }
 
     [Fact]
@@ -45,7 +51,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
         {
             title = "Amazing AI Demo",
             presenterName = "Jane Dev",
-            description = "A demo of something amazing"
+            description = "A demo of something amazing",
         };
 
         var response = await _client.PostAsJsonAsync("/presentations", newPresentation);
@@ -60,7 +66,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
         {
             title = "Cloud Native App",
             presenterName = "John Cloud",
-            description = "Serverless everything"
+            description = "Serverless everything",
         };
 
         var response = await _client.PostAsJsonAsync("/presentations", newPresentation);
@@ -76,7 +82,12 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     public async Task GetPresentation_ExistingId_ReturnsOk()
     {
         // First create one
-        var newPresentation = new { title = "Test Talk", presenterName = "Speaker", description = "" };
+        var newPresentation = new
+        {
+            title = "Test Talk",
+            presenterName = "Speaker",
+            description = "",
+        };
         var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
@@ -98,12 +109,22 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     public async Task UpdatePresentation_ReturnsOk()
     {
         // Create first
-        var newPresentation = new { title = "Old Title", presenterName = "Speaker", description = "" };
+        var newPresentation = new
+        {
+            title = "Old Title",
+            presenterName = "Speaker",
+            description = "",
+        };
         var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
         // Update
-        var update = new { title = "New Title", presenterName = "Speaker", description = "Updated" };
+        var update = new
+        {
+            title = "New Title",
+            presenterName = "Speaker",
+            description = "Updated",
+        };
         var response = await _client.PutAsJsonAsync($"/presentations/{created!.Id}", update);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -113,7 +134,12 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     public async Task DeletePresentation_ReturnsNoContent()
     {
         // Create first
-        var newPresentation = new { title = "To Delete", presenterName = "Speaker", description = "" };
+        var newPresentation = new
+        {
+            title = "To Delete",
+            presenterName = "Speaker",
+            description = "",
+        };
         var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
@@ -124,5 +150,11 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     }
 
     // Response DTO used for deserialization in tests
-    private record PresentationResponse(Guid Id, string Title, string PresenterName, string Description, DateTimeOffset CreatedAt);
+    private record PresentationResponse(
+        Guid Id,
+        string Title,
+        string PresenterName,
+        string Description,
+        DateTimeOffset CreatedAt
+    );
 }
