@@ -26,3 +26,7 @@ Key rules established:
 ### 2026-05-04 — Team Training Completed
 
 All engineering norms have been encoded and merged to `.squad/decisions/decisions.md`. Orchestration logs written. Team has shared understanding of TDD (with Kevin gate), MSE principles, vertical slices, quality-over-quantity, trunk-based delivery, and continuous delivery practices.
+
+### 2026-05-04 — Slice 1 Complete
+
+Slice 1 delivered: health endpoint + home page. Failing tests written for both backend (2) and frontend (3). Kevin approved; all tests passing after implementation by Han (backend) and Leia (frontend). Full team executed vertical slice successfully. See `.squad/orchestration-log/2026-05-04T18-29-24Z-finn.md`.
