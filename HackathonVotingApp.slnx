@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/HackathonVotingApp.Api.Tests/HackathonVotingApp.Api.Tests.csproj" />
+    <Project Path="src/HackathonVotingApp.Api/HackathonVotingApp.Api.csproj" />
+  </Folder>
+</Solution>
