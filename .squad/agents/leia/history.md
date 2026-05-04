@@ -35,3 +35,17 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 - **framer-motion:** Used for entrance animations on heading, subtext, and CTA button.
 - **Workflow:** Merged Finn's `finn/1-slice1-failing-tests` branch to get the frontend scaffold, then implemented the component.
 - **Gotcha:** When checking out a new branch at the same commit as another branch, git may silently track the wrong one. Always verify with `git branch --show-current` before committing.
+
+### 2026-05-04 — Slice 2 Admin Page (Issue #17)
+
+- **Branch:** `leia/17-slice2-admin-ui`
+- **PR:** https://github.com/aligneddev/HackathonVotingApp/pull/22
+- **Tests:** All 6 pass — 3 AdminPage + 3 HomePage
+  - renders_presentations_heading ✅
+  - renders_add_presentation_button ✅
+  - renders_presentation_list_after_fetch ✅
+- **AdminPage.tsx location:** `src/frontend/src/pages/AdminPage.tsx`
+- **fetch() pattern:** Component uses `fetch()` directly — no axios. Tests mock `global.fetch` with `vi.fn()`. Do NOT use any other HTTP lib.
+- **Tailwind v4 dark theme classes:** `bg-gray-950`, `bg-gray-900`, `text-indigo-400`, `border-gray-700`, `rounded-xl` — standard dark engineering palette.
+- **Route pattern:** No React Router installed — App.tsx uses `window.location.pathname` for simple conditional routing. `/admin` → `<AdminPage />`, default → `<HomePage />`.
+- **Gotcha (repeated):** git may commit to the wrong branch if another branch exists at the same commit. Always verify `git branch --show-current` before committing.
