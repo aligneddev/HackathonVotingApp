@@ -1,10 +1,7 @@
 using System.Net;
 using System.Net.Http.Json;
 using FluentAssertions;
-using HackathonVotingApp.Api.Data;
 using Microsoft.AspNetCore.Mvc.Testing;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace HackathonVotingApp.Api.Tests.Endpoints;
@@ -15,17 +12,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
 
     public PresentationEndpointTests(WebApplicationFactory<Program> factory)
     {
-        _client = factory.WithWebHostBuilder(builder =>
-        {
-            builder.ConfigureServices(services =>
-            {
-                var descriptor = services.SingleOrDefault(d => d.ServiceType == typeof(DbContextOptions<AppDbContext>));
-                if (descriptor != null) services.Remove(descriptor);
-                var dbName = $"TestDb-{Guid.NewGuid()}";
-                services.AddDbContext<AppDbContext>(options =>
-                    options.UseInMemoryDatabase(dbName));
-            });
-        }).CreateClient();
+        _client = factory.CreateClient();
     }
 
     [Fact]
