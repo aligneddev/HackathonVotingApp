@@ -27,6 +27,40 @@ Key rules established:
 
 All engineering norms have been encoded and merged to `.squad/decisions/decisions.md`. Orchestration logs written. Team has shared understanding of TDD (with Kevin gate), MSE principles, vertical slices, quality-over-quantity, trunk-based delivery, and continuous delivery practices.
 
+### 2026-05-04 — Slice 2 Red Phase
+
+Wrote failing tests for Presentation CRUD (TDD Red phase).
+
+**Branch:** `finn/slice2-failing-tests`
+**PR:** https://github.com/aligneddev/HackathonVotingApp/pull/21 (Draft)
+
+**Test files created:**
+- `src/HackathonVotingApp.Api.Tests/Endpoints/PresentationEndpointTests.cs` — 7 API integration tests
+- `src/frontend/src/__tests__/AdminPage.test.tsx` — 3 frontend component tests
+- `src/frontend/src/pages/AdminPage.tsx` — empty stub (makes tests compile, all fail)
+
+**API Test Results (dotnet test):**
+| Test | Status |
+|---|---|
+| GetPresentations_ReturnsOkWithEmptyList | ❌ FAIL (no route → 404) |
+| CreatePresentation_ReturnsCreated | ❌ FAIL (no route → 404) |
+| CreatePresentation_ReturnsCreatedPresentationWithId | ❌ FAIL (no route → 404) |
+| GetPresentation_ExistingId_ReturnsOk | ❌ FAIL (no route → 404) |
+| GetPresentation_MissingId_ReturnsNotFound | ⚠️ Pre-passes (404 before route; validates correctly post-impl) |
+| UpdatePresentation_ReturnsOk | ❌ FAIL (no route → 404) |
+| DeletePresentation_ReturnsNoContent | ❌ FAIL (no route → 404) |
+
+**Frontend Test Results (npm test):**
+| Test | Status |
+|---|---|
+| renders_presentations_heading | ❌ FAIL (stub renders empty div) |
+| renders_add_presentation_button | ❌ FAIL (stub renders empty div) |
+| renders_presentation_list_after_fetch | ❌ FAIL (stub renders empty div) |
+
+**Notes:**
+- `GetPresentation_MissingId_ReturnsNotFound` currently passes because no `/presentations` route exists (ASP.NET returns 404 for unmatched routes). This test will remain valid after implementation — it will pass only if the endpoint correctly handles a missing ID with 404.
+- MSW is not yet installed in the frontend. Tests use `vi.fn()` to mock `fetch` globally. Future test additions should use MSW per SKILL.md conventions.
+
 ### 2026-05-04 — Slice 1 Complete
 
 Slice 1 delivered: health endpoint + home page. Failing tests written for both backend (2) and frontend (3). Kevin approved; all tests passing after implementation by Han (backend) and Leia (frontend). Full team executed vertical slice successfully. See `.squad/orchestration-log/2026-05-04T18-29-24Z-finn.md`.
