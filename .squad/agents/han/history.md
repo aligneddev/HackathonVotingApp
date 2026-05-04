@@ -46,3 +46,44 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-han.md` for full details.
 - Merged from `finn/1-slice1-failing-tests` branch first to get test files and API project scaffold.
 - Solution file is `.slnx` format (not `.sln`) — already existed, left untouched.
 
+### 2026-05-04: Slice 2 — Presentation CRUD API (TDD Green Phase)
+
+**Branch:** `han/20-slice2-presentation-crud`  
+**PR:** #23 — https://github.com/aligneddev/HackathonVotingApp/pull/23  
+**Issue:** #20
+
+**Files created:**
+- `src/HackathonVotingApp.Api/Models/Presentation.cs` — EF Core entity model
+- `src/HackathonVotingApp.Api/Models/PresentationDtos.cs` — CreatePresentationRequest, UpdatePresentationRequest, PresentationResponse records + ToResponse() extension
+- `src/HackathonVotingApp.Api/Data/AppDbContext.cs` — EF Core DbContext with Presentations DbSet
+
+**Files modified:**
+- `src/HackathonVotingApp.Api/Program.cs` — added EF Core InMemory registration + 5 CRUD endpoints
+- `src/HackathonVotingApp.Api.Tests/Endpoints/PresentationEndpointTests.cs` — added DB isolation via WithWebHostBuilder
+
+**Endpoint routes:**
+- `GET /presentations` → 200 + list
+- `POST /presentations` → 201 + created resource
+- `GET /presentations/{id:guid}` → 200 or 404
+- `PUT /presentations/{id:guid}` → 200 or 404
+- `DELETE /presentations/{id:guid}` → 204 or 404
+
+**EF Core InMemory configuration (Program.cs):**
+```csharp
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseInMemoryDatabase("HackathonVotingApp"));
+```
+
+**DB isolation for tests:** Each test uses `factory.WithWebHostBuilder(...)` to override `DbContextOptions<AppDbContext>` with a unique `$"TestDb-{Guid.NewGuid()}"`. The GUID must be captured in a local variable OUTSIDE the options lambda — if placed inside, it reruns per-request, creating a new DB each time and causing 404s.
+
+**Test results:** 9/9 passed
+- `GetHealth_ReturnsOk` ✅
+- `GetHealth_ReturnsExpectedBody` ✅
+- `GetPresentations_ReturnsOkWithEmptyList` ✅
+- `CreatePresentation_ReturnsCreated` ✅
+- `CreatePresentation_ReturnsCreatedPresentationWithId` ✅
+- `GetPresentation_ExistingId_ReturnsOk` ✅
+- `GetPresentation_MissingId_ReturnsNotFound` ✅
+- `UpdatePresentation_ReturnsOk` ✅
+- `DeletePresentation_ReturnsNoContent` ✅
+
