@@ -87,3 +87,9 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 - `UpdatePresentation_ReturnsOk` ✅
 - `DeletePresentation_ReturnsNoContent` ✅
 
+**Decisions Made:**
+1. **EF Core InMemory for Slice 2** — Using InMemory DB for rapid dev/test cycles. Azure SQL migration planned for Slice 6.
+2. **Minimal API MapGroup** — Route grouping under `/presentations` prefix for cleaner code and future middleware support.
+3. **DTO Separation** — Keep domain models separate from HTTP DTOs for decoupling and independent evolution.
+4. **DB Isolation Tests** — Each test gets unique `TestDb-{Guid.NewGuid()}` name to prevent data leakage across tests. **Critical:** GUID must be outside the options lambda.
+
