@@ -1,0 +1,25 @@
+{
+  "universe_usage_history": [
+    {
+      "universe": "Star Wars",
+      "used_at": "2026-05-04",
+      "project": "HackathonVotingApp"
+    }
+  ],
+  "assignment_cast_snapshots": {
+    "2026-05-04-hackathonvotingapp": {
+      "assignment_id": "2026-05-04-hackathonvotingapp",
+      "universe": "Star Wars",
+      "project": "HackathonVotingApp",
+      "created_at": "2026-05-04",
+      "agents": {
+        "obi-wan": "Lead",
+        "leia": "Frontend Dev",
+        "han": "Backend Dev",
+        "finn": "Tester",
+        "poe": "DevOps/Azure",
+        "padme": "Technical Writer"
+      }
+    }
+  }
+}
