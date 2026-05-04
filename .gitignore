@@ -6,3 +6,18 @@
 .squad/.scratch/
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
+
+# .NET
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# Frontend
+src/frontend/node_modules/
+src/frontend/dist/
+
+# OS
+.DS_Store
+Thumbs.db
