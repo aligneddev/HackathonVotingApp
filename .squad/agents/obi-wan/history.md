@@ -51,3 +51,22 @@ Created 6 Slice 1 work items as GitHub issues in `aligneddev/HackathonVotingApp`
 **GitHub Project Board:**
 - Project board creation requires `project` and `read:project` OAuth scopes. Current gh auth token lacks these scopes.
 - Workaround: Manually create GitHub Project "HackathonVotingApp — Slice 1" via web UI, add issues #1, #2, #5, #6, #7, #8, and configure status columns (Todo, In Progress, Review/Gate, Done).
+
+### 2026-05-04 — Slice 2 GitHub Issues Created
+
+Created 5 Slice 2 work items (Presentation Admin CRUD) as GitHub issues in `aligneddev/HackathonVotingApp`:
+
+**Issues Created:**
+- **#19** — "[Slice 2] Write failing tests — Presentation CRUD" (Finn, `squad:finn`)
+  - TDD Red Phase: failing tests for all Slice 2 features before implementation begins. Tests for API endpoints (GET, POST, PUT, DELETE /presentations) and frontend AdminPage component.
+- **#18** — "[Slice 2] GATE: Kevin reviews and approves failing tests" (Kevin, `tdd-gate`)
+  - Hard gate: Kevin reviews and approves Finn's tests. Blocks #20 (Han), #17 (Leia).
+- **#20** — "[Slice 2] .NET 10 API — Presentation CRUD endpoints" (Han, `squad:han`)
+  - Backend: Presentation model (Id, Title, PresenterName, Description, CreatedAt). EF Core with InMemory database. Minimal API endpoints (GET, POST, PUT, DELETE /presentations). Depends on gate #18.
+- **#17** — "[Slice 2] React Admin UI — Presentation CRUD" (Leia, `squad:leia`)
+  - Frontend: AdminPage.tsx with presentation list, add/edit form, delete with confirmation. Fetch from API. Mobile-first, Tailwind v4, engineering theme. Depends on gate #18.
+- **#16** — "[Slice 2] Update README — Presentation CRUD API docs" (Padme, `squad:padme`)
+  - Documentation: API endpoint docs, /admin route docs, dev setup updates. Depends on #20 + #17.
+
+**Labels Created:**
+- `slice-2` (#0E8A16) — all Slice 2 issues
