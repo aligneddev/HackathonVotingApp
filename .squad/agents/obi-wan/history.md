@@ -22,3 +22,32 @@ Updated all six agent charters (obi-wan, leia, han, finn, poe, padme) with a `##
 ### 2026-05-04 — Team Training Completed
 
 All engineering norms have been encoded and merged to `.squad/decisions/decisions.md`. Orchestration logs written. Team has shared understanding of TDD (with Kevin gate), MSE principles, vertical slices, quality-over-quantity, trunk-based delivery, and continuous delivery practices.
+
+### 2026-05-04 — Slice 1 GitHub Issues Created
+
+Created 6 Slice 1 work items as GitHub issues in `aligneddev/HackathonVotingApp`:
+
+**Issues Created:**
+- **#1** — "[Slice 1] Write failing tests — health endpoint + home page" (Finn, `squad:finn`)
+  - TDD gate: tests before implementation. Failing tests for health endpoint + home page.
+- **#2** — "[Slice 1] GATE: Kevin reviews and approves failing tests" (Kevin, `tdd-gate`)
+  - Hard gate: Kevin must approve tests before implementation begins. Blocks #6, #7, #8.
+- **#5** — "[Slice 1] Scaffold Bicep infra stubs + GitHub Actions CI" (Poe, `squad:poe`, `infra`)
+  - Infrastructure skeleton: Bicep stubs, no real provisioning. CI/CD workflow for .NET + React.
+- **#6** — "[Slice 1] Scaffold .NET 10 minimal API + implement health endpoint" (Han, `squad:han`)
+  - Backend skeleton: Make Finn's tests pass. Health endpoint returns 200 + status JSON. Depends on gate #2.
+- **#7** — "[Slice 1] Scaffold React/Vite frontend + engineering-themed home page" (Leia, `squad:leia`)
+  - Frontend skeleton: Engineering-themed home page (dark bg, circuit motif, Framer Motion). Depends on gate #2.
+- **#8** — "[Slice 1] Update README with local dev setup instructions" (Padme, `squad:padme`)
+  - Developer documentation: dev env setup, how to run API/frontend locally. Depends on #6 + #7.
+
+**Labels Created:**
+- `slice-1` (#0075ca) — all Slice 1 issues
+- `squad` (#e4e669) — all team issues
+- `squad:finn`, `squad:han`, `squad:leia`, `squad:poe`, `squad:padme` (#d93f0b) — assignee labels
+- `tdd-gate` (#b60205) — test review gates
+- `infra` (#0e8a16) — infrastructure work
+
+**GitHub Project Board:**
+- Project board creation requires `project` and `read:project` OAuth scopes. Current gh auth token lacks these scopes.
+- Workaround: Manually create GitHub Project "HackathonVotingApp — Slice 1" via web UI, add issues #1, #2, #5, #6, #7, #8, and configure status columns (Todo, In Progress, Review/Gate, Done).

@@ -1,125 +1,55 @@
-# HackathonVotingApp
+# Hackathon Voting App
+An app to vote for hackathon presenters
 
-A mobile-first web app for voting on hackathon presentations. The top 3 presentations earn prizes.
+Using Squad
+* https://github.com/bradygaster/squad
 
-**Theme:** Engineering | **Stack:** React + .NET 10 + Azure
 
----
+the squad is from the universe of StarWars.
+I'm creating a react app with a  .Net 10 backend. We will host in Azure with the least cost possible. I'll need a technical
+writer for documenation. Create the team
 
-## Prerequisites
+5/4 started with 4.2% usages
+   │ Name        │ Role                                           │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 🏗️ │ Obi-Wan     │ Lead — architecture, decisions, code review    │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ ⚛️ │ Leia        │ Frontend Dev — React, UI, components           │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 🔧 │ Han         │ Backend Dev — .NET 10 APIs, EF Core            │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 🧪 │ Finn        │ Tester — unit/integration tests, QA            │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ ⚙️ │ Poe         │ DevOps/Azure — infra, CI/CD, cost optimization │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 📝 │ Padme       │ Technical Writer — docs, API refs, README      │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 📋 │ Scribe      │ Session logger (silent)                        │
+├────┼─────────────┼────────────────────────────────────────────────┤
+│ 🔄 │ Ralph       │ Work monitor                            
 
-| Tool | Version | Install |
-|------|---------|---------|
-| .NET SDK | 10.x | [dotnet.microsoft.com](https://dotnet.microsoft.com/download) |
-| Node.js | 22+ | [nodejs.org](https://nodejs.org/) |
-| Git | any | [git-scm.com](https://git-scm.com/) |
 
----
+train the team and bring in skills to use TDD with failing tests first, then I will review the tests before complete. We will
+work in vertical slices, we want quality over quantiy. Use the best engineering practices for Modern Software Engineering
+* Optimize for Learning
+	- Work iteratively
+	- Prioritize feedback
+	- Embrace incrementalism
+	- Be Experimental
+	- Practice Empiricism (ground decisions on feedback and evidence)
+* Optimize for Managing Complexity
+	- Design for Modularity
+	- Maintain High Cohesion
+	- Separate Concerns
+	- Hide Information and Use Abstraction
+  - Manage Coupling Effectively
+* Trunk Based Delivery
+* Continuous Delivery
 
-## Quick Start
+ the squad needs to make work visible. Issues should be created in the GitHub project. Progress should be reflected in the board
+  in the status as work goes forwar
 
-### 1. Clone the repo
 
-```bash
-git clone https://github.com/aligneddev/HackathonVotingApp.git
-cd HackathonVotingApp
-```
-
-### 2. Run the API
-
-```bash
-dotnet restore
-dotnet run --project src/HackathonVotingApp.Api
-```
-
-API runs at `http://localhost:5000`. Health check: `GET /health` → `{"status":"healthy"}`
-
-### 3. Run the Frontend
-
-```bash
-cd src/frontend
-npm install
-npm run dev
-```
-
-Frontend runs at `http://localhost:5173`.
-
----
-
-## Running Tests
-
-### API Tests (.NET / xUnit)
-
-```bash
-dotnet test
-```
-
-### Frontend Tests (Vitest)
-
-```bash
-cd src/frontend
-npm test
-```
-
-### All tests
-
-```bash
-# From repo root
-dotnet test && cd src/frontend && npm test
-```
-
----
-
-## Project Structure
-
-```
-HackathonVotingApp/
-├── src/
-│   ├── HackathonVotingApp.Api/         # .NET 10 minimal API
-│   │   └── Program.cs                  # Endpoints
-│   ├── HackathonVotingApp.Api.Tests/   # xUnit integration tests
-│   └── frontend/                       # React + Vite + Tailwind v4
-│       └── src/
-│           ├── pages/HomePage.tsx      # Engineering-themed home page
-│           └── __tests__/              # Vitest component tests
-├── infra/                              # Azure Bicep (not deployed yet)
-│   ├── main.bicep
-│   ├── appservice.bicep
-│   ├── sql.bicep
-│   └── staticwebapp.bicep
-└── .github/workflows/ci.yml           # GitHub Actions CI
-```
-
----
-
-## CI/CD
-
-GitHub Actions runs on every push and PR to `main`:
-- ✅ .NET build + test
-- ✅ React build + test
-
-See `.github/workflows/ci.yml`.
-
----
-
-## Azure Infrastructure (Slice 3 — not deployed yet)
-
-| Resource | Tier | Cost |
-|----------|------|------|
-| Static Web Apps | Free | $0/mo |
-| App Service | F1 Free | $0/mo |
-| SQL Database | Serverless (auto-pause) | ~$0 idle |
-
-Bicep templates in `infra/` are stubs — deployment comes in a future slice.
-
----
-
-## Development Workflow
-
-This project uses **trunk-based delivery** with short-lived feature branches:
-
-1. Branch: `{agent}/{issue-number}-{slug}` (e.g., `han/6-health-endpoint`)
-2. Commit: [Conventional Commits](https://www.conventionalcommits.org/) (`feat:`, `fix:`, `test:`, etc.)
-3. PR → CI green → review → merge to `main`
-
-**TDD is required.** Tests are written first (Red), reviewed, then implementation follows (Green).
+## Implementation
+We are building mobile first web app, data stored in an Azure Database. Create the plan to create the skeleton projects and the home page with a 
+fancy visual welcoming them to the hackathon voting. Our theme is engineering   
