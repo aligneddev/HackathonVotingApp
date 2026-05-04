@@ -7,8 +7,32 @@ on:
     branches: [ main ]
 
 jobs:
+  detect-changes:
+    name: Detect changed paths
+    runs-on: ubuntu-latest
+    outputs:
+      dotnet: ${{ steps.filter.outputs.dotnet }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check for .NET project
+        id: filter
+        run: |
+          if find . -name "*.sln" | grep -q .; then
+            echo "dotnet=true" >> $GITHUB_OUTPUT
+          else
+            echo "dotnet=false" >> $GITHUB_OUTPUT
+          fi
+          if [ -f "src/frontend/package.json" ]; then
+            echo "frontend=true" >> $GITHUB_OUTPUT
+          else
+            echo "frontend=false" >> $GITHUB_OUTPUT
+          fi
+
   build-and-test-api:
     name: .NET API — Build & Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.dotnet == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -29,6 +53,8 @@ jobs:
 
   build-and-test-frontend:
     name: React Frontend — Build & Test
+    needs: detect-changes
+    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:

@@ -7,17 +7,68 @@
 # Squad: SubSquad activation file (local to this machine)
 .squad-workstream
 
-# .NET
+# Ignore build results
 bin/
 obj/
+
+# User-specific files
 *.user
 *.suo
-.vs/
+*.userosscache
+*.sln.docstates
 
-# Frontend
-src/frontend/node_modules/
-src/frontend/dist/
+# VS Code
+.history/
 
-# OS
+# Paket
+paket-files/
+
+# Rider
+.idea/
+*.sln.iml
+
+# Fable output
+fable-build/
+
+# Logs
+*.log
+
+# OS generated files
 .DS_Store
 Thumbs.db
+
+# BikeCommuter.Web results
+TestResults/
+
+# Azure Pipelines
+.azure-pipelines/
+
+# Local secrets
+secrets.json
+appsettings.Development.json
+
+# Others
+*.db
+*.db-shm
+*.db-wal
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
+*.bak
+*.cache
+node_modules/
+dist/
+build/
+coverage/
+.env*
+*.tmp
+*.swp
+
+#Paket dependency manager
+paket-files/
+
+src/.vs/*
+.vscode/
+packages/
+
+.fake
