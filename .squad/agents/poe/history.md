@@ -24,3 +24,21 @@ Kevin mandated Trunk Based Delivery and Continuous Delivery as the team's delive
 ### 2026-05-04 — Team Training Completed
 
 All engineering norms have been encoded and merged to `.squad/decisions/decisions.md`. Orchestration logs written. Team has shared understanding of TDD (with Kevin gate), MSE principles, vertical slices, quality-over-quantity, trunk-based delivery, and continuous delivery practices.
+
+### 2026-05-04 — Slice 1: Bicep Infra Skeleton + GitHub Actions CI
+
+**Branch:** `poe/3-slice1-infra-skeleton`
+**PR:** https://github.com/aligneddev/HackathonVotingApp/pull/9 (draft, Closes #3)
+
+**Files created:**
+- `infra/main.bicep` — orchestrates all three modules
+- `infra/sql.bicep` — Azure SQL serverless (GP_S_Gen5_1), auto-pause after 60 min idle
+- `infra/appservice.bicep` — App Service Plan F1 free tier + Web App (.NET 10)
+- `infra/staticwebapp.bicep` — Static Web Apps free tier (src/frontend → dist)
+- `.github/workflows/ci.yml` — CI pipeline: .NET 10 build+test + React Node 22 build+test
+
+**Cost decisions:**
+- Static Web Apps: Free tier — zero cost for React hosting, built-in GitHub Actions deployment
+- App Service: F1 Free tier — 60 CPU min/day, sufficient for dev/demo; upgrade to B1 when load warrants
+- SQL Database: Serverless (GP_S_Gen5_1) with `autoPauseDelay: 60` — free tier eligible, auto-pauses after 1h idle, critical for bursty hackathon event usage
+- No Key Vault in Slice 1 — deferred to Slice 3 when real secrets are needed
