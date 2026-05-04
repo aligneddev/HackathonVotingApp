@@ -46,6 +46,9 @@ work in vertical slices, we want quality over quantiy. Use the best engineering 
 * Trunk Based Delivery
 * Continuous Delivery
 
+ the squad needs to make work visible. Issues should be created in the GitHub project. Progress should be reflected in the board
+  in the status as work goes forwar
+
 
 ## Implementation
 We are building mobile first web app, data stored in an Azure Database. Create the plan to create the skeleton projects and the home page with a 
