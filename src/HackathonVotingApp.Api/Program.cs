@@ -3,10 +3,38 @@ using HackathonVotingApp.Api.Models;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
+var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var allowedOrigins = configuredOrigins
+    .Where(origin => !string.IsNullOrWhiteSpace(origin))
+    .Select(origin => origin.Trim())
+    .Distinct(StringComparer.OrdinalIgnoreCase)
+    .ToArray();
+
+if (builder.Environment.IsDevelopment() && allowedOrigins.Length == 0)
+{
+    allowedOrigins = ["http://localhost:5173"];
+}
+
+if (allowedOrigins.Length > 0)
+{
+    builder.Services.AddCors(options =>
+    {
+        options.AddPolicy(
+            "FrontendCors",
+            policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()
+        );
+    });
+}
+
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("HackathonVotingApp"));
 
 var app = builder.Build();
+
+if (allowedOrigins.Length > 0)
+{
+    app.UseCors("FrontendCors");
+}
 
 app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
 
