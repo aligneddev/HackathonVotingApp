@@ -30,6 +30,7 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("HackathonVotingApp"));
 builder.Services.AddScoped<IPresentationService, PresentationService>();
 builder.Services.AddScoped<IVotingService, VotingService>();
+builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
 var app = builder.Build();
 
@@ -118,6 +119,9 @@ votes.MapGet(
         return Results.Ok(new { count });
     }
 );
+
+app.MapGet("/leaderboard", async (ILeaderboardService svc) =>
+    Results.Ok(await svc.GetLeaderboardAsync()));
 
 app.Run();
 
