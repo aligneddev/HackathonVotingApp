@@ -277,6 +277,13 @@ public static class PresentationExtensions
 
 ** Code Formatting:** follow the .editorconfig (create one if needed), run `dotnet csharpier format .` for C#, and `prettier --write .` for TypeScript before committing.
 
+### 2026-05-05: Slice PR Policy
+**By:** Kevin Logan (via Copilot)
+**What:** Each slice = one PR. All tests (backend + frontend) must be green before the PR is created. GitHub issues for all work items in the slice must be created and linked to the PR. PR is not opened until the full slice is done and verified.
+**Why:** User request — captured for team memory. Prevents partial merges like the Slice 4 incident where red-phase and implementation PRs were split.
+
+---
+
 ## Governance
 
 - All meaningful changes require team consensus
