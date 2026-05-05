@@ -103,3 +103,30 @@ Kevin approved standing conventions for all backend work:
 - **DTOs live separately.** Entity in `Models/{Domain}.cs`, DTO in `Models/{Domain}Dtos.cs`, mapped via `ToResponse()` extension. Never expose EF entities directly on the API surface.
 - **Vote seam pattern.** When Kevin announces a new feature for a future slice, add the interface + stub + DI registration in the current slice so the seam exists. Do not wait until the feature slice to introduce the type.
 
+### 2026-05-05: Slice 4 Green Phase — Real-Time Leaderboard Backend
+
+Implemented `LeaderboardService` and `GET /leaderboard` endpoint.
+
+**Branch:** `han/slice4-leaderboard`  
+**PR:** #25 — Merged to main  
+**Status:** ✅ Complete — all 7 backend tests passing
+
+**Files created:**
+- `src/HackathonVotingApp.Api/Services/LeaderboardService.cs` — service implementation
+- `src/HackathonVotingApp.Api/Models/LeaderboardDtos.cs` — `LeaderboardEntryResponse` record
+
+**Implementation:**
+- `GetLeaderboardAsync(int limit = 50)` queries all presentations, joins with votes, aggregates vote counts, sorts descending, returns top N
+- `GET /leaderboard?limit={optional}` route returns 200 OK with ranked array
+- Default limit: 50 (per Kevin's TDD approval)
+- Real-time: no caching — fresh counts every request
+
+**Test results:** 7/7 passing
+- 4 service unit tests (empty db, with votes, limit respected, real-time updates)
+- 3 endpoint integration tests (returns ok, ranked order, pagination)
+
+**Architecture notes:** Service uses in-memory aggregation (LINQ-to-Objects). Presentation without votes filtered out. Service-layer integrity (all logic in service, not route handler). Real-time patterns support future SignalR integration.
+
+**Cross-slice learning:** Leaderboard aggregates Vote and Presentation data from Slices 3 and 2. Integration verified in tests. No breaking changes to existing models.
+
+See `.squad/orchestration-log/2026-05-05T15-53-05Z-han.md` for full green phase details.

@@ -65,3 +65,31 @@ Kevin approved standing conventions for all frontend work:
 - **Frontend types mirror backend DTOs.** The `Presentation` interface in `presentationApi.ts` should match `PresentationResponse` from the backend. When the backend DTO changes, update the frontend interface. Shared contract = no surprises.
 - **Ubiquitous language on the frontend too.** Variable names, component props, state names — use the domain word. `presentations`, not `items`. `presenterName`, not `name`.
 
+### 2026-05-05: Slice 4 Green Phase — Real-Time Leaderboard Frontend
+
+Implemented `LeaderboardPage` component and `leaderboardApi` module.
+
+**Branch:** `leia/slice4-leaderboard`  
+**PR:** #26 — Open  
+**Status:** ✅ Complete — all 6 frontend tests passing
+
+**Files created:**
+- `src/frontend/src/api/leaderboardApi.ts` — HTTP client module with `getLeaderboard(limit?)` function
+- `src/frontend/src/pages/LeaderboardPage.tsx` — component with fetch-on-mount, loading/error states, ranked table display
+
+**Implementation:**
+- API module: Exports `LeaderboardEntry` interface + `leaderboardApi.getLeaderboard()` function
+- Component: Fetches leaderboard on mount, displays loading state, renders ranked table with rank numbers, presentation title, presenter name, vote counts
+- Styling: Dark theme (gray-950 bg, indigo-400 rank numbers, hover highlights)
+- Error handling: Displays fetch errors to user; no silent failures
+- Route: `/leaderboard` registered in App.tsx
+
+**Test results:** 6/6 passing
+- 2 API client tests (fetch endpoint, response parsing)
+- 4 component tests (heading render, loading state, ranked list render, updates when votes change)
+
+**Architecture notes:** All fetch logic in api module (seam). Tests mock api module, not global.fetch. Component uses api seam; integration tests verify routing. Pattern supports future SignalR integration.
+
+**Cross-slice learning:** Frontend integrates with Han's backend leaderboard endpoint. API contract matches backend DTOs. Type safety verified through tests. Frontend prepared for real-time updates (SignalR) in future slice.
+
+See `.squad/orchestration-log/2026-05-05T15-53-05Z-leia.md` for full green phase details.

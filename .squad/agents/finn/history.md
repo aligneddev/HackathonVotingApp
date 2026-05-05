@@ -130,3 +130,29 @@ Kevin approved standing conventions — these change how tests are written:
 - **Integration tests still use WebApplicationFactory.** Http-level integration tests keep verifying the full stack. Both unit (service) and integration (HTTP) tests are expected.
 - **Test naming follows the domain.** Test class: `PresentationServiceTests`. Test method: `CreateAsync_WithValidRequest_ReturnsCreatedPresentation`. Domain words everywhere.
 - **Test the seam, not the transport.** For frontend: mock the api module (the seam). For backend: test the service method (the seam). Integration tests verify the wiring, not the logic.
+
+### 2026-05-05: Slice 4 Red Phase — Real-Time Leaderboard
+
+Wrote failing tests for Slice 4 (Real-Time Leaderboard) — 13 tests across backend service, endpoint, frontend API client, and component.
+
+**Branch:** `finn/slice4-failing-tests`
+
+**Test contracts established:**
+- `GET /leaderboard?limit=50` endpoint returning ranked presentations by vote count
+- `ILeaderboardService.GetLeaderboardAsync(int limit = 50)` service method
+- Frontend `leaderboardApi.getLeaderboard(limit?: number)` HTTP client
+- `LeaderboardPage` component with loading state, error handling, ranked table display
+
+**Test results:**
+- Service unit tests (4): All failing (NotImplementedException)
+- Endpoint integration tests (3): All failing (404 — no route)
+- API client tests (2): Passing (stub satisfies contract)
+- Component tests (4): All failing (empty stub)
+
+**Key learning:** API client tests pass in red phase because the stub HTTP client correctly implements the contract (GET request, JSON parsing). These tests are contract enforcement. True red-phase gates are service, endpoint, and component failures.
+
+**Approval:** Kevin approved test suite per TDD discipline. Default limit changed to 50 per Kevin's review.
+
+**Decision record:** `.squad/decisions/inbox/finn-slice4-tdd.md`
+
+See `.squad/orchestration-log/2026-05-05T15-53-05Z-finn.md` for full red phase details.
