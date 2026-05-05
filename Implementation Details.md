@@ -49,3 +49,9 @@ work in vertical slices, we want quality over quantiy. Use the best engineering 
 ## Implementation
 We are building mobile first web app, data stored in an Azure Database. Create the plan to create the skeleton projects and the home page with a 
 fancy visual welcoming them to the hackathon voting. Our theme is engineering  
+
+
+5/5 I ran /improve-codebase-architecture from https://github.com/mattpocock/skills.
+
+then /caveman  I don't have time to look at this, but I like your approach. Apply your suggestions in
+this current branch and get us to a good starting point before continued implementatio

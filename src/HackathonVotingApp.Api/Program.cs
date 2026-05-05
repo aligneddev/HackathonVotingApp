@@ -1,5 +1,5 @@
 using HackathonVotingApp.Api.Data;
-using HackathonVotingApp.Api.Models;
+using HackathonVotingApp.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -28,6 +28,8 @@ if (allowedOrigins.Length > 0)
 
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("HackathonVotingApp"));
+builder.Services.AddScoped<IPresentationService, PresentationService>();
+builder.Services.AddScoped<IVotingService, VotingService>();
 
 var app = builder.Build();
 
@@ -42,61 +44,42 @@ var presentations = app.MapGroup("/presentations");
 
 presentations.MapGet(
     "/",
-    async (AppDbContext db) => await db.Presentations.Select(p => p.ToResponse()).ToListAsync()
+    async (IPresentationService service) => Results.Ok(await service.GetAllAsync())
 );
 
 presentations.MapPost(
     "/",
-    async (CreatePresentationRequest request, AppDbContext db) =>
+    async (HackathonVotingApp.Api.Models.CreatePresentationRequest request, IPresentationService service) =>
     {
-        var presentation = new Presentation
-        {
-            Title = request.Title,
-            PresenterName = request.PresenterName,
-            Description = request.Description ?? string.Empty,
-        };
-        db.Presentations.Add(presentation);
-        await db.SaveChangesAsync();
-        return Results.Created($"/presentations/{presentation.Id}", presentation.ToResponse());
+        var result = await service.CreateAsync(request);
+        return Results.Created($"/presentations/{result.Id}", result);
     }
 );
 
 presentations.MapGet(
     "/{id:guid}",
-    async (Guid id, AppDbContext db) =>
+    async (Guid id, IPresentationService service) =>
     {
-        var presentation = await db.Presentations.FindAsync(id);
-        return presentation is null ? Results.NotFound() : Results.Ok(presentation.ToResponse());
+        var result = await service.GetByIdAsync(id);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 );
 
 presentations.MapPut(
     "/{id:guid}",
-    async (Guid id, UpdatePresentationRequest request, AppDbContext db) =>
+    async (Guid id, HackathonVotingApp.Api.Models.UpdatePresentationRequest request, IPresentationService service) =>
     {
-        var presentation = await db.Presentations.FindAsync(id);
-        if (presentation is null)
-            return Results.NotFound();
-
-        presentation.Title = request.Title;
-        presentation.PresenterName = request.PresenterName;
-        presentation.Description = request.Description ?? string.Empty;
-        await db.SaveChangesAsync();
-        return Results.Ok(presentation.ToResponse());
+        var result = await service.UpdateAsync(id, request);
+        return result is null ? Results.NotFound() : Results.Ok(result);
     }
 );
 
 presentations.MapDelete(
     "/{id:guid}",
-    async (Guid id, AppDbContext db) =>
+    async (Guid id, IPresentationService service) =>
     {
-        var presentation = await db.Presentations.FindAsync(id);
-        if (presentation is null)
-            return Results.NotFound();
-
-        db.Presentations.Remove(presentation);
-        await db.SaveChangesAsync();
-        return Results.NoContent();
+        var deleted = await service.DeleteAsync(id);
+        return deleted ? Results.NoContent() : Results.NotFound();
     }
 );
 

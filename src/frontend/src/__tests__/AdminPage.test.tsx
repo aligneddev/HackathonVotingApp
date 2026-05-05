@@ -1,33 +1,36 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import AdminPage from '../pages/AdminPage';
+import * as presentationApiModule from '../api/presentationApi';
 
-// Mock fetch globally
-const mockFetch = vi.fn();
-global.fetch = mockFetch;
+vi.mock('../api/presentationApi', () => ({
+  presentationApi: {
+    getPresentations: vi.fn(),
+    createPresentation: vi.fn(),
+    deletePresentation: vi.fn(),
+  },
+}));
+
+const mockApi = presentationApiModule.presentationApi as {
+  getPresentations: ReturnType<typeof vi.fn>;
+  createPresentation: ReturnType<typeof vi.fn>;
+  deletePresentation: ReturnType<typeof vi.fn>;
+};
 
 describe('AdminPage', () => {
   beforeEach(() => {
-    mockFetch.mockReset();
+    vi.clearAllMocks();
   });
 
   it('renders_presentations_heading', () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [],
-    });
-
+    mockApi.getPresentations.mockResolvedValueOnce([]);
     render(<AdminPage />);
     const heading = screen.getByRole('heading', { name: /presentations/i });
     expect(heading).toBeInTheDocument();
   });
 
   it('renders_add_presentation_button', () => {
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => [],
-    });
-
+    mockApi.getPresentations.mockResolvedValueOnce([]);
     render(<AdminPage />);
     const button = screen.getByRole('button', { name: /add presentation/i });
     expect(button).toBeInTheDocument();
@@ -37,15 +40,8 @@ describe('AdminPage', () => {
     const mockPresentations = [
       { id: '1', title: 'Amazing Demo', presenterName: 'Jane Dev', description: '', createdAt: new Date().toISOString() },
     ];
-    mockFetch.mockResolvedValueOnce({
-      ok: true,
-      json: async () => mockPresentations,
-    });
-
+    mockApi.getPresentations.mockResolvedValueOnce(mockPresentations);
     render(<AdminPage />);
-
-    await waitFor(() => {
-      expect(screen.getByText('Amazing Demo')).toBeInTheDocument();
-    });
+    await waitFor(() => { expect(screen.getByText('Amazing Demo')).toBeInTheDocument(); });
   });
 });
