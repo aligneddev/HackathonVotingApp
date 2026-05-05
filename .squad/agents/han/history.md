@@ -46,3 +46,60 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-han.md` for full details.
 - Merged from `finn/1-slice1-failing-tests` branch first to get test files and API project scaffold.
 - Solution file is `.slnx` format (not `.sln`) — already existed, left untouched.
 
+### 2026-05-04: Slice 2 — Presentation CRUD API (TDD Green Phase)
+
+**Branch:** `han/20-slice2-presentation-crud`  
+**PR:** #23 — https://github.com/aligneddev/HackathonVotingApp/pull/23  
+**Issue:** #20
+
+**Files created:**
+- `src/HackathonVotingApp.Api/Models/Presentation.cs` — EF Core entity model
+- `src/HackathonVotingApp.Api/Models/PresentationDtos.cs` — CreatePresentationRequest, UpdatePresentationRequest, PresentationResponse records + ToResponse() extension
+- `src/HackathonVotingApp.Api/Data/AppDbContext.cs` — EF Core DbContext with Presentations DbSet
+
+**Files modified:**
+- `src/HackathonVotingApp.Api/Program.cs` — added EF Core InMemory registration + 5 CRUD endpoints
+- `src/HackathonVotingApp.Api.Tests/Endpoints/PresentationEndpointTests.cs` — added DB isolation via WithWebHostBuilder
+
+**Endpoint routes:**
+- `GET /presentations` → 200 + list
+- `POST /presentations` → 201 + created resource
+- `GET /presentations/{id:guid}` → 200 or 404
+- `PUT /presentations/{id:guid}` → 200 or 404
+- `DELETE /presentations/{id:guid}` → 204 or 404
+
+**EF Core InMemory configuration (Program.cs):**
+```csharp
+builder.Services.AddDbContext<AppDbContext>(opt =>
+    opt.UseInMemoryDatabase("HackathonVotingApp"));
+```
+
+**DB isolation for tests:** Each test uses `factory.WithWebHostBuilder(...)` to override `DbContextOptions<AppDbContext>` with a unique `$"TestDb-{Guid.NewGuid()}"`. The GUID must be captured in a local variable OUTSIDE the options lambda — if placed inside, it reruns per-request, creating a new DB each time and causing 404s.
+
+**Test results:** 9/9 passed
+- `GetHealth_ReturnsOk` ✅
+- `GetHealth_ReturnsExpectedBody` ✅
+- `GetPresentations_ReturnsOkWithEmptyList` ✅
+- `CreatePresentation_ReturnsCreated` ✅
+- `CreatePresentation_ReturnsCreatedPresentationWithId` ✅
+- `GetPresentation_ExistingId_ReturnsOk` ✅
+- `GetPresentation_MissingId_ReturnsNotFound` ✅
+- `UpdatePresentation_ReturnsOk` ✅
+- `DeletePresentation_ReturnsNoContent` ✅
+
+**Decisions Made:**
+1. **EF Core InMemory for Slice 2** — Using InMemory DB for rapid dev/test cycles. Azure SQL migration planned for Slice 6.
+2. **Minimal API MapGroup** — Route grouping under `/presentations` prefix for cleaner code and future middleware support.
+3. **DTO Separation** — Keep domain models separate from HTTP DTOs for decoupling and independent evolution.
+4. **DB Isolation Tests** — Each test gets unique `TestDb-{Guid.NewGuid()}` name to prevent data leakage across tests. **Critical:** GUID must be outside the options lambda.
+
+### 2026-05-05: Architecture Conventions Established
+
+Kevin approved standing conventions for all backend work:
+
+- **Program.cs stays thin.** It is an HTTP adapter only. All logic belongs in service classes. Route handlers are one-liners: call service → return IResult. If you find yourself writing business logic in a route handler, extract it.
+- **Service interface first.** Every new domain concept gets `IXxxService` before implementation. Register it in DI as a stub if needed. This lets Finn mock and test before the slice lands.
+- **Ubiquitous language is non-negotiable.** Use the domain word everywhere: class names, method names, variable names, EF entity names, DTO names. `Presentation`, `Vote`, `Score` — not `Item`, `Entry`, `Data`.
+- **DTOs live separately.** Entity in `Models/{Domain}.cs`, DTO in `Models/{Domain}Dtos.cs`, mapped via `ToResponse()` extension. Never expose EF entities directly on the API surface.
+- **Vote seam pattern.** When Kevin announces a new feature for a future slice, add the interface + stub + DI registration in the current slice so the seam exists. Do not wait until the feature slice to introduce the type.
+

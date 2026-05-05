@@ -49,3 +49,25 @@ work in vertical slices, we want quality over quantiy. Use the best engineering 
 ## Implementation
 We are building mobile first web app, data stored in an Azure Database. Create the plan to create the skeleton projects and the home page with a 
 fancy visual welcoming them to the hackathon voting. Our theme is engineering  
+
+
+5/5 I ran /improve-codebase-architecture from https://github.com/mattpocock/skills.
+
+then /caveman  I don't have time to look at this, but I like your approach. Apply your suggestions in
+this current branch and get us to a good starting point before continued implementation
+
+slice 2 PRs
+
+## TODO
+- [ ] voting Rubric addition
+- [ ] More presentation details for submission
+- [ ] Omnitech presentation submission - sudo auth
+- [ ] Voting
+- [ ] Secure Admin
+- [ ] Admin - edit presentation details
+- [ ] Admin - view votes and results, ranking
+- [ ] Add some voting animations and fun visuals
+- [ ] My presentation submission and details
+- [ ] Deploy to Azure with the bicep files
+- [ ] Integration/Acceptance Tests
+- [ ] Aspirify

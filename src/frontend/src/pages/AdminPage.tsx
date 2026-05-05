@@ -1,32 +1,14 @@
 import { useEffect, useState } from 'react';
-
-interface Presentation {
-  id: string;
-  title: string;
-  presenterName: string;
-  description: string;
-  createdAt: string;
-}
-
-interface CreatePresentationForm {
-  title: string;
-  presenterName: string;
-  description: string;
-}
+import { presentationApi, Presentation } from '../api/presentationApi';
 
 export default function AdminPage() {
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
-  const [form, setForm] = useState<CreatePresentationForm>({
-    title: '',
-    presenterName: '',
-    description: '',
-  });
+  const [form, setForm] = useState({ title: '', presenterName: '', description: '' });
 
   useEffect(() => {
-    fetch('/presentations')
-      .then(res => res.json())
+    presentationApi.getPresentations()
       .then(data => {
         setPresentations(data);
         setLoading(false);
@@ -36,23 +18,22 @@ export default function AdminPage() {
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
-    const res = await fetch('/presentations', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(form),
-    });
-    if (res.ok) {
-      const created = await res.json();
+    try {
+      const created = await presentationApi.createPresentation(form);
       setPresentations(prev => [...prev, created]);
       setForm({ title: '', presenterName: '', description: '' });
       setShowForm(false);
+    } catch {
+      // creation failed; leave form open
     }
   };
 
   const handleDelete = async (id: string) => {
-    const res = await fetch(`/presentations/${id}`, { method: 'DELETE' });
-    if (res.ok) {
+    try {
+      await presentationApi.deletePresentation(id);
       setPresentations(prev => prev.filter(p => p.id !== id));
+    } catch {
+      // deletion failed; keep item in list
     }
   };
 

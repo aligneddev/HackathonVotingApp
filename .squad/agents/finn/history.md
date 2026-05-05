@@ -64,3 +64,34 @@ Wrote failing tests for Presentation CRUD (TDD Red phase).
 ### 2026-05-04 — Slice 1 Complete
 
 Slice 1 delivered: health endpoint + home page. Failing tests written for both backend (2) and frontend (3). Kevin approved; all tests passing after implementation by Han (backend) and Leia (frontend). Full team executed vertical slice successfully. See `.squad/orchestration-log/2026-05-04T18-29-24Z-finn.md`.
+
+### 2026-05-05: PresentationService Unit Tests Written
+
+Created `src/HackathonVotingApp.Api.Tests/Services/PresentationServiceTests.cs` — 15 unit tests covering all 5 service methods.
+
+**Test file:** `src/HackathonVotingApp.Api.Tests/Services/PresentationServiceTests.cs`
+
+**Pattern used:** Direct `AppDbContext` instantiation with EF Core InMemory, unique DB name per GUID per test. No HTTP stack, no WebApplicationFactory, no NSubstitute needed.
+
+**Tests by method:**
+| Method | Tests |
+|---|---|
+| GetAllAsync | EmptyDb_ReturnsEmptyList, WithPresentations_ReturnsAll |
+| GetByIdAsync | ExistingId_ReturnsPresentationResponse, NonExistentId_ReturnsNull |
+| CreateAsync | ValidRequest_ReturnsPresentationResponse, ValidRequest_PersistsToDb, NullDescription_DefaultsToEmptyString |
+| UpdateAsync | ExistingId_ReturnsUpdatedResponse, NonExistentId_ReturnsNull, UpdatesAllFields |
+| DeleteAsync | ExistingId_ReturnsTrue, NonExistentId_ReturnsFalse, ExistingId_RemovesFromDb |
+
+**Results:** All 22 tests pass (15 new unit + 7 existing integration).
+
+**Key learning:** `await using` is required for `AppDbContext` (it implements `IAsyncDisposable`). Without proper disposal, EF Core InMemory state could leak between tests if the same provider were reused.
+
+### 2026-05-05: Architecture Conventions Established
+
+Kevin approved standing conventions — these change how tests are written:
+
+- **Mock the api module, not global.fetch.** Tests for components that use an api module (e.g., AdminPage using presentationApi) should mock the module with `vi.mock('../api/presentationApi', ...)`. Never mock `global.fetch` for component tests — that bypasses the seam.
+- **Service unit tests are now possible.** Han extracts business logic into `PresentationService` etc. Finn can unit-test services directly (no WebApplicationFactory, no HTTP stack) by injecting a mock AppDbContext.
+- **Integration tests still use WebApplicationFactory.** Http-level integration tests keep verifying the full stack. Both unit (service) and integration (HTTP) tests are expected.
+- **Test naming follows the domain.** Test class: `PresentationServiceTests`. Test method: `CreateAsync_WithValidRequest_ReturnsCreatedPresentation`. Domain words everywhere.
+- **Test the seam, not the transport.** For frontend: mock the api module (the seam). For backend: test the service method (the seam). Integration tests verify the wiring, not the logic.
