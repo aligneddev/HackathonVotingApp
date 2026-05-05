@@ -86,6 +86,41 @@ Created `src/HackathonVotingApp.Api.Tests/Services/PresentationServiceTests.cs` 
 
 **Key learning:** `await using` is required for `AppDbContext` (it implements `IAsyncDisposable`). Without proper disposal, EF Core InMemory state could leak between tests if the same provider were reused.
 
+### 2026-05-05: Slice 4 Red Phase — Real-Time Leaderboard
+
+Wrote failing tests for Slice 4 (Real-Time Leaderboard + SignalR).
+
+**Branch:** `finn/slice4-failing-tests`
+
+**Stubs created (compilation only):**
+- `src/HackathonVotingApp.Api/Models/LeaderboardDtos.cs` — `LeaderboardEntryResponse` record
+- `src/HackathonVotingApp.Api/Services/ILeaderboardService.cs` — interface seam
+- `src/HackathonVotingApp.Api/Services/LeaderboardService.cs` — stub (throws `NotImplementedException`)
+- `src/frontend/src/api/leaderboardApi.ts` — minimal API client stub
+- `src/frontend/src/pages/LeaderboardPage.tsx` — empty component stub
+
+**Test files created:**
+- `src/HackathonVotingApp.Api.Tests/Services/LeaderboardServiceTests.cs` — 4 service unit tests
+- `src/HackathonVotingApp.Api.Tests/Endpoints/LeaderboardEndpointTests.cs` — 3 integration tests
+- `src/frontend/src/__tests__/leaderboardApi.test.ts` — 2 API client tests
+- `src/frontend/src/__tests__/LeaderboardPage.test.tsx` — 4 component tests
+
+**Results:**
+| File | Tests | Failing |
+|---|---|---|
+| `LeaderboardServiceTests.cs` | 4 | 4 ❌ (NotImplementedException) |
+| `LeaderboardEndpointTests.cs` | 3 | 3 ❌ (404 — no route) |
+| `leaderboardApi.test.ts` | 2 | 0 (stub satisfies contract) |
+| `LeaderboardPage.test.tsx` | 4 | 4 ❌ (empty stub) |
+
+**Key contracts established:**
+- `GET /leaderboard` → 200 with `[{ id, title, presenterName, voteCount }]` ordered descending by `voteCount`
+- `ILeaderboardService.GetLeaderboardAsync(int limit = 10)` — default 10 items
+- `LeaderboardPage` must show loading state, rank numbers, and vote counts
+- Decision note: `.squad/decisions/inbox/finn-slice4-tdd.md`
+
+**Learning:** `leaderboardApi.test.ts` tests pass in red phase because the minimal API client stub correctly implements the HTTP contract (calls `GET /leaderboard`, parses JSON). These tests serve as contract enforcement, not red-phase gates. The true red-phase failures are in the service, endpoint, and component layers.
+
 ### 2026-05-05: Architecture Conventions Established
 
 Kevin approved standing conventions — these change how tests are written:
