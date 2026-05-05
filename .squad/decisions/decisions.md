@@ -229,3 +229,122 @@ Slice 1 development complete. All five team members delivered working, tested co
 
 - Merge PRs to main in dependency order
 - Team ready for Slice 2 planning
+
+---
+
+## 2026-05-05
+
+### 2026-05-05T11:03: Slice 3 — Voting TDD Test Contracts
+
+**By:** Finn (Tester)  
+**Status:** Red phase complete — awaiting Kevin approval before implementation begins
+
+**Purpose:** This document records the test contracts written for Slice 3: Voting (cast vote, cookie dedup, validation). Each test defines the expected behavior Han (backend) and Leia (frontend) must implement to make it green.
+
+**Backend — Integration Tests (`VotingEndpointTests.cs`):**
+- Expected routes: `POST /votes/{presentationId}` and `GET /votes/{presentationId}/count`
+- 6 integration tests covering 201 Created, 404 Not Found, 409 Conflict, vote count response shape
+
+**Backend — Unit Tests (`VotingServiceTests.cs`):**
+- 6 unit tests on VotingService: CastVoteAsync (return true/false), GetVoteCountAsync (return count)
+- Dedup contract: CastVoteAsync returns false if Vote for same PresentationId already exists (DB-level)
+- Cookie dedup is HTTP layer's responsibility, not service
+
+**Frontend — Component Tests (`VotingButton.test.tsx`):**
+- 4 component tests: render enabled/disabled button, click calls castVote, state updates after vote
+- localStorage key pattern: `voted-{presentationId}`
+- Mocking pattern: `vi.mock('../api/votingApi', ...)`
+
+**Frontend — API Tests (`votingApi.test.ts`):**
+- 2 API module tests: castVote POST, getVoteCount GET with fetch mocking
+- votingApi shape: `{ castVote: async (id: string): Promise<void>, getVoteCount: async (id: string): Promise<number> }`
+
+**Implementation Guidance:** Detailed patterns provided for Han (route group, cookie logic, service) and Leia (api module, component with useState lazy initializer).
+
+---
+
+### 2026-05-05: Han — Slice 3 Voting Backend Decision
+
+**By:** Han (Backend Dev)  
+**Status:** Implemented — all 34 tests passing
+
+**Decision:** Cookie Dedup at HTTP Layer + Service-Level Integrity Guard
+
+**Context:** CastVoteAsync needs duplicate-vote prevention. Two layers implemented:
+- **HTTP Layer:** Route handler reads request cookie `hackathon-voted-{presentationId}`. If present, return 409 Conflict immediately.
+- **Service Layer:** VotingService.CastVoteAsync checks `db.Votes.AnyAsync(v => v.PresentationId == presentationId)`. If exists, return false; else persist Vote, SaveChanges, return true.
+
+**Rationale:**
+- Cookie check: Primary user-facing dedup for same browser, HTTP-specific concern
+- DB check: Safety net, independently testable, service-layer integrity
+- Separation of concerns: Service knows domain (Votes table), route handler bridges HTTP context
+
+**Route Handler Pattern:**
+```csharp
+votes.MapPost("/{presentationId:guid}", async (Guid presentationId, IVotingService votingService, HttpContext httpContext) =>
+{
+    var cookieKey = $"hackathon-voted-{presentationId}";
+    if (httpContext.Request.Cookies.ContainsKey(cookieKey))
+        return Results.Conflict();
+    var success = await votingService.CastVoteAsync(presentationId);
+    if (!success) return Results.NotFound();
+    httpContext.Response.Cookies.Append(cookieKey, "true", new CookieOptions { MaxAge = TimeSpan.FromDays(365) });
+    return Results.Created($"/votes/{presentationId}", null);
+});
+```
+
+**Vote Count Route:** Checks presentation existence first (404 if not found), then calls GetVoteCountAsync to count votes, returns 200 `{ count }`.
+
+---
+
+### 2026-05-05: Leia — Slice 3 Voting Frontend Decisions
+
+**By:** Leia (Frontend Dev)  
+**Status:** Implemented — all 12 tests passing
+
+**Decision 1: localStorage Vote Deduplication Pattern**
+
+Client-side guard: After successful vote, write `voted-${presentationId}` → `'true'` to localStorage. On component mount, check that key via lazy `useState` initializer to set initial disabled state.
+
+**Why lazy initializer:** Synchronous localStorage read during first render avoids useEffect + second render, preventing flash of enabled state.
+
+**Pattern:**
+```tsx
+const storageKey = `voted-${presentationId}`;
+const [voted, setVoted] = useState(() => !!localStorage.getItem(storageKey));
+
+const handleVote = async () => {
+  await votingApi.castVote(presentationId);
+  localStorage.setItem(storageKey, 'true');
+  setVoted(true);
+};
+```
+
+**Scope:** Client-side dedup only. Server-side dedup (by session/IP) is future work.
+
+**Decision 2: VotingButton Component Contract**
+
+Props: `{ presentationId: string }`
+
+Button text and styling:
+- Not voted: `"Vote"` — enabled, indigo background (`bg-indigo-600 hover:bg-indigo-500`)
+- Already voted: `"Voted!"` — disabled, gray background (`bg-gray-600`)
+
+Error handling: Silently swallowed for now; future slice should add error state/toast.
+
+**Decision 3: votingApi Module Contract**
+
+Module: `src/frontend/src/api/votingApi.ts`
+
+```typescript
+export const votingApi = {
+  castVote: async (presentationId: string): Promise<void>
+  getVoteCount: async (presentationId: string): Promise<number>
+}
+```
+
+Routes:
+- `POST /votes/{presentationId}` — cast vote
+- `GET /votes/{presentationId}/count` — returns `{ count: number }`
+
+Error handling: Both throw on `!res.ok`. Test mock pattern: `vi.mock('../api/votingApi', ...)` as single seam.

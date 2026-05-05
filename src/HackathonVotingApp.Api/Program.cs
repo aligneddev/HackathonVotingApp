@@ -83,6 +83,42 @@ presentations.MapDelete(
     }
 );
 
+var votes = app.MapGroup("/votes");
+
+votes.MapPost(
+    "/{presentationId:guid}",
+    async (Guid presentationId, IVotingService votingService, HttpContext httpContext) =>
+    {
+        var cookieKey = $"hackathon-voted-{presentationId}";
+        if (httpContext.Request.Cookies.ContainsKey(cookieKey))
+            return Results.Conflict();
+
+        var success = await votingService.CastVoteAsync(presentationId);
+        if (!success)
+            return Results.NotFound();
+
+        httpContext.Response.Cookies.Append(
+            cookieKey,
+            "true",
+            new CookieOptions { MaxAge = TimeSpan.FromDays(365) }
+        );
+        return Results.Created($"/votes/{presentationId}", null);
+    }
+);
+
+votes.MapGet(
+    "/{presentationId:guid}/count",
+    async (Guid presentationId, IPresentationService presentationService, IVotingService votingService) =>
+    {
+        var presentation = await presentationService.GetByIdAsync(presentationId);
+        if (presentation is null)
+            return Results.NotFound();
+
+        var count = await votingService.GetVoteCountAsync(presentationId);
+        return Results.Ok(new { count });
+    }
+);
+
 app.Run();
 
 public partial class Program { }
