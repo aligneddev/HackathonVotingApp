@@ -8,6 +8,7 @@ export default defineConfig({
     proxy: {
       '/presentations': 'http://localhost:5050',
       '/votes': 'http://localhost:5050',
+      '/leaderboard': 'http://localhost:5050',
       '/health': 'http://localhost:5050',
     }
   }
