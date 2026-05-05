@@ -111,6 +111,36 @@ services.AddDbContext<AppDbContext>(options =>
 
 ---
 
+### 2026-05-05: PresentationService Unit Tests
+**Date:** 2026-05-05  
+**Author:** Finn (Tester)  
+**Status:** Complete — all tests passing
+
+**Context:** Slice 2 (Presentation Admin CRUD) was functionally complete with integration tests only. `PresentationService` was extracted from `Program.cs` by Han but had no direct unit tests. The service layer is independently testable without an HTTP stack.
+
+**Decision: Direct AppDbContext with EF Core InMemory**
+
+Pattern:
+```csharp
+private static AppDbContext CreateDb()
+{
+    var options = new DbContextOptionsBuilder<AppDbContext>()
+        .UseInMemoryDatabase($"TestDb-{Guid.NewGuid()}")
+        .Options;
+    return new AppDbContext(options);
+}
+```
+
+Each test method calls `CreateDb()` and gets a fully isolated, uniquely-named InMemory database.
+
+**Why:** No HTTP overhead, no NSubstitute needed, isolation guaranteed, dispose safety ensured.
+
+**Test Coverage:** 15 tests covering all 5 service methods (GetAllAsync, GetByIdAsync, CreateAsync, UpdateAsync, DeleteAsync). All 22 tests pass: 15 new unit tests + 7 existing integration tests.
+
+**Test File:** `src/HackathonVotingApp.Api.Tests/Services/PresentationServiceTests.cs`
+
+---
+
 ### 2026-05-05: HackathonVotingApp Architecture Conventions
 **Date:** 2026-05-05
 **Author:** Obi-Wan (Lead)
@@ -233,7 +263,19 @@ public static class PresentationExtensions
 }
 ```
 
+
+### Style Guidelines
+
+- **Minimal APIs** — No controllers, use top-level route definitions
+- **Records for DTOs** — Immutable data types
+- **Result types** — No exceptions for expected business flows
+- **Pure functions** — Business logic should be side-effect free where possible
+- **Ubiquitous language** — Use domain terms from `.squad/skills/domain-driven-design/SKILL.md`
+
 **Frontend contract:** The TypeScript `Presentation` interface in `presentationApi.ts` mirrors `PresentationResponse`. When the backend DTO changes, the frontend interface must be updated. These are the shared contract — keep them in sync.
+
+
+** Code Formatting:** follow the .editorconfig (create one if needed), run `dotnet csharpier format .` for C#, and `prettier --write .` for TypeScript before committing.
 
 ## Governance
 
