@@ -56,7 +56,35 @@ fancy visual welcoming them to the hackathon voting. Our theme is engineering
 then /caveman  I don't have time to look at this, but I like your approach. Apply your suggestions in
 this current branch and get us to a good starting point before continued implementation
 
-slice 2 PRs
+slice 2 and 3 PRs
+
+ Requests  11 Premium (5h 19m 3s)
+ Tokens    ↑ 14.0m • ↓ 150.2k • 12.3m (cached)
+
+
+### Slice 4
+ Slice 4 — Red Phase Ready for Review
+
+  Branch: finn/slice4-failing-tests
+
+  ┌───────────────────────────────┬───────────────────────────────────────────┬────┐
+  │ File                          │ Tests                                     │    │
+  ├───────────────────────────────┼───────────────────────────────────────────┼────┤
+  │ LeaderboardServiceTests.cs    │ GetLeaderboard_ReturnsEmpty,              │ ❌ │
+  │                               │ _RankedByVotes, _LimitsToTopN,            │ 4  │
+  │                               │ _IncludesVoteCount                        │    │
+  ├───────────────────────────────┼───────────────────────────────────────────┼────┤
+  │ LeaderboardEndpointTests.cs   │ GetLeaderboard_ReturnsOk,                 │ ❌ │
+  │                               │ _ReturnsRankedList, _ReturnsEmptyArray    │ 3  │
+  ├───────────────────────────────┼───────────────────────────────────────────┼────┤
+  │ leaderboardApi.test.ts        │ _callsCorrectEndpoint, _returnsRankedList │ ✅ │
+  │                               │                                           │ 2  │
+  ├───────────────────────────────┼───────────────────────────────────────────┼────┤
+  │ LeaderboardPage.test.tsx      │ renders_loading_state,                    │ ❌ │
+  │                               │ renders_leaderboard_entries,              │ 4  │
+  │                               │ shows_rank_numbers, shows_vote_counts     │    │
+  └───────────────────────────────┴───────────────────────────────────────────┴────┘
+
 
 ## TODO
 - [ ] voting Rubric addition
