@@ -109,6 +109,132 @@ services.AddDbContext<AppDbContext>(options =>
 
 **Impact:** Authentication and proper routing (React Router or similar) must be added in a future slice before production deployment.
 
+---
+
+### 2026-05-05: HackathonVotingApp Architecture Conventions
+**Date:** 2026-05-05
+**Author:** Obi-Wan (Lead)
+**Status:** Standing conventions — applied after Slice 2 architecture improvements
+
+#### Convention 1: Ubiquitous Language
+**Rule:** Domain terms must be consistent from the database schema through the service layer to the API surface to the frontend types. Never use generic names (`item`, `thing`, `data`, `entry`). Use the domain word everywhere — class names, method names, variable names, EF entity names, DTO property names, React state names, TypeScript interface names.
+
+**Rationale:** When a name is domain-correct at every layer, the whole team can reason about code without translation. Ambiguity in naming is a source of bugs and miscommunication. `Presentation`, `Vote`, `Score` — not `Item`, `Entry`, `Data`.
+
+**Pattern — introduce the name before the implementation:** The `Vote` model and `IVotingService` exist before voting is implemented. That is intentional. When Kevin announces a new domain concept, name it in the domain language first, then implement. The type system enforces the ubiquitous language from day one.
+
+**Examples:**
+- ✅ `presentations`, `presenterName`, `PresentationResponse`
+- ❌ `items`, `name`, `ApiResponse`
+
+#### Convention 2: Thin Routing Layer (Program.cs as Adapter)
+**Rule:** `Program.cs` is an HTTP adapter. It wires dependency injection and maps routes to service calls. No business logic lives in `Program.cs`. Route handlers must be one-liners: call a service method and convert the result to an `IResult`. Any logic beyond "call service → return IResult" belongs in a service class.
+
+**Rationale:** Business logic in route handlers is untestable without an HTTP stack, cannot be reused, and bloats `Program.cs` into an unmaintainable monolith. Keeping it thin makes every service independently testable.
+
+**Pattern:**
+```csharp
+presentations.MapGet("/", async (IPresentationService svc) =>
+    Results.Ok(await svc.GetAllAsync()));
+
+presentations.MapPost("/", async (CreatePresentationRequest req, IPresentationService svc) =>
+{
+    var result = await svc.CreateAsync(req);
+    return Results.Created($"/presentations/{result.Id}", result);
+});
+```
+
+**Violation signal:** If you find yourself writing an `if`, `foreach`, or any data transformation inside a route handler lambda, extract it.
+
+#### Convention 3: Service Interface Seams
+**Rule:** Every domain concept gets an interface (`IPresentationService`, `IVotingService`) before implementation details are finalized. Interfaces are registered in DI — even as stubs — from the moment the domain concept is named.
+
+**Rationale:** Interfaces allow unit testing of business logic without an HTTP stack. Registering stubs before the feature slice lands means the seam exists for injection and mocking from day one. No team member is blocked waiting for another's slice to land.
+
+**Pattern — stub registration:**
+```csharp
+builder.Services.AddScoped<IVotingService, VotingService>(); // stub until Slice N
+```
+
+**Pattern — unit test (no WebApplicationFactory):**
+```csharp
+var mockContext = Substitute.For<AppDbContext>(...);
+var svc = new PresentationService(mockContext);
+var result = await svc.CreateAsync(req);
+```
+
+**Rule for new domain areas:** When a new feature is planned (voting, scoring, leaderboard), the interface + stub + DI registration are added in the current slice. The seam exists before the feature slice begins.
+
+#### Convention 4: Typed Frontend API Client
+**Rule:** React components do not call `fetch()` directly. All API communication is centralized in `src/api/{domain}Api.ts` (e.g., `presentationApi.ts`, `votingApi.ts`). Components import typed functions from the api module.
+
+**Module responsibilities:**
+- URL construction
+- HTTP method, headers, body serialization
+- Error handling — throws on `!response.ok` (no silent failures)
+- TypeScript interfaces that mirror backend DTOs
+
+**Pattern:**
+```typescript
+// src/api/presentationApi.ts
+export interface Presentation { id: string; title: string; presenterName: string; ... }
+
+export const presentationApi = {
+  getAll: async (): Promise<Presentation[]> => {
+    const res = await fetch('/presentations');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    return res.json();
+  },
+  // ...
+};
+```
+
+**Test rule:** Tests mock the api module, not `global.fetch`.
+```typescript
+vi.mock('../api/presentationApi', () => ({ presentationApi: { getAll: vi.fn() } }));
+```
+
+**Rule for new domains:** When a new domain is added (voting, scoring), a corresponding `votingApi.ts` is created before the component that needs it.
+
+#### Convention 5: React Router for Navigation
+**Rule:** All routing goes through React Router (`BrowserRouter` + `Routes` + `Route`). No `window.location` string comparisons. No raw `href` programmatic navigation without `useNavigate`. New pages register a `<Route>` in `App.tsx`.
+
+**Rationale:** React Router is the single routing authority. It provides auth guards, lazy loading, nested routes, and navigation history — all seams the app will need as it grows. `window.location.pathname` checks are fragile, invisible to the router, and cannot be guarded.
+
+**Pattern:**
+```tsx
+// App.tsx
+<BrowserRouter>
+  <Routes>
+    <Route path="/" element={<HomePage />} />
+    <Route path="/admin" element={<AdminPage />} />
+  </Routes>
+</BrowserRouter>
+```
+
+**Rule:** Every new page = a new `<Route>` in `App.tsx`. Future auth guards wrap route groups inside the router — not conditionals around `window.location`.
+
+#### Convention 6: DTOs Separate from Domain Models
+**Rule:** EF Core entities and API contracts live in separate files. The entity represents the data model; the DTO represents the HTTP contract. They evolve independently. A `ToResponse()` extension method maps entity → DTO at the service boundary.
+
+**File structure:**
+- `Models/{Domain}.cs` — EF Core entity
+- `Models/{Domain}Dtos.cs` — request records, response records, `{Domain}Extensions.ToResponse()`
+
+**Rationale:** API contracts and data models diverge over time. Exposing EF entities directly on the API surface creates coupling — a DB schema change becomes a breaking API change. `ToResponse()` keeps mapping logic cohesive, testable, and in one place.
+
+**Pattern:**
+```csharp
+// PresentationDtos.cs
+public static class PresentationExtensions
+{
+    public static PresentationResponse ToResponse(this Presentation p) =>
+        new(p.Id, p.Title, p.PresenterName, p.Description, p.CreatedAt);
+}
+```
+
+**Frontend contract:** The TypeScript `Presentation` interface in `presentationApi.ts` mirrors `PresentationResponse`. When the backend DTO changes, the frontend interface must be updated. These are the shared contract — keep them in sync.
+
 ## Governance
 
 - All meaningful changes require team consensus

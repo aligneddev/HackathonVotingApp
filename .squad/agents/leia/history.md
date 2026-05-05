@@ -55,3 +55,13 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 2. **useEffect + useState** — Component handles data fetching with React hooks (no React Query or SWR). Sufficient for Slice 2 scope; can revisit in future slices with complex caching.
 3. **No authentication** — `/admin` route accessible without auth. Pathname-based routing (no React Router). Auth will be added in a future slice before production.
 
+### 2026-05-05: Architecture Conventions Established
+
+Kevin approved standing conventions for all frontend work:
+
+- **Never call fetch() in a component.** All HTTP communication lives in `src/api/{domain}Api.ts`. Components import typed functions. This makes mocking in tests trivial and keeps components focused on UI concerns.
+- **Api module structure:** Each domain gets its own file (`presentationApi.ts`, `votingApi.ts`). The module exports: typed interfaces + an api object with async methods. Methods throw on HTTP errors (no silent failures).
+- **React Router is the routing authority.** All navigation uses `<Route>` in `App.tsx`. No `window.location`, no `href` programmatic navigation without `useNavigate`. New pages = new `<Route>`.
+- **Frontend types mirror backend DTOs.** The `Presentation` interface in `presentationApi.ts` should match `PresentationResponse` from the backend. When the backend DTO changes, update the frontend interface. Shared contract = no surprises.
+- **Ubiquitous language on the frontend too.** Variable names, component props, state names — use the domain word. `presentations`, not `items`. `presenterName`, not `name`.
+

@@ -93,3 +93,13 @@ builder.Services.AddDbContext<AppDbContext>(opt =>
 3. **DTO Separation** — Keep domain models separate from HTTP DTOs for decoupling and independent evolution.
 4. **DB Isolation Tests** — Each test gets unique `TestDb-{Guid.NewGuid()}` name to prevent data leakage across tests. **Critical:** GUID must be outside the options lambda.
 
+### 2026-05-05: Architecture Conventions Established
+
+Kevin approved standing conventions for all backend work:
+
+- **Program.cs stays thin.** It is an HTTP adapter only. All logic belongs in service classes. Route handlers are one-liners: call service → return IResult. If you find yourself writing business logic in a route handler, extract it.
+- **Service interface first.** Every new domain concept gets `IXxxService` before implementation. Register it in DI as a stub if needed. This lets Finn mock and test before the slice lands.
+- **Ubiquitous language is non-negotiable.** Use the domain word everywhere: class names, method names, variable names, EF entity names, DTO names. `Presentation`, `Vote`, `Score` — not `Item`, `Entry`, `Data`.
+- **DTOs live separately.** Entity in `Models/{Domain}.cs`, DTO in `Models/{Domain}Dtos.cs`, mapped via `ToResponse()` extension. Never expose EF entities directly on the API surface.
+- **Vote seam pattern.** When Kevin announces a new feature for a future slice, add the interface + stub + DI registration in the current slice so the seam exists. Do not wait until the feature slice to introduce the type.
+

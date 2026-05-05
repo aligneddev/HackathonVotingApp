@@ -64,3 +64,13 @@ Wrote failing tests for Presentation CRUD (TDD Red phase).
 ### 2026-05-04 — Slice 1 Complete
 
 Slice 1 delivered: health endpoint + home page. Failing tests written for both backend (2) and frontend (3). Kevin approved; all tests passing after implementation by Han (backend) and Leia (frontend). Full team executed vertical slice successfully. See `.squad/orchestration-log/2026-05-04T18-29-24Z-finn.md`.
+
+### 2026-05-05: Architecture Conventions Established
+
+Kevin approved standing conventions — these change how tests are written:
+
+- **Mock the api module, not global.fetch.** Tests for components that use an api module (e.g., AdminPage using presentationApi) should mock the module with `vi.mock('../api/presentationApi', ...)`. Never mock `global.fetch` for component tests — that bypasses the seam.
+- **Service unit tests are now possible.** Han extracts business logic into `PresentationService` etc. Finn can unit-test services directly (no WebApplicationFactory, no HTTP stack) by injecting a mock AppDbContext.
+- **Integration tests still use WebApplicationFactory.** Http-level integration tests keep verifying the full stack. Both unit (service) and integration (HTTP) tests are expected.
+- **Test naming follows the domain.** Test class: `PresentationServiceTests`. Test method: `CreateAsync_WithValidRequest_ReturnsCreatedPresentation`. Domain words everywhere.
+- **Test the seam, not the transport.** For frontend: mock the api module (the seam). For backend: test the service method (the seam). Integration tests verify the wiring, not the logic.

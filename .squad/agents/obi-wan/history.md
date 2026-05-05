@@ -70,3 +70,17 @@ Created 5 Slice 2 work items (Presentation Admin CRUD) as GitHub issues in `alig
 
 **Labels Created:**
 - `slice-2` (#0E8A16) — all Slice 2 issues
+
+### 2026-05-05: Architecture Conventions Codified
+
+Kevin approved and the team applied a round of architecture improvements. Formalized as standing decisions:
+- Thin routing (Program.cs adapter pattern)
+- Service interface seams before features land
+- Typed frontend API clients (no raw fetch in components)
+- React Router as routing authority
+- Ubiquitous language from DB to UI
+- DTOs separate from domain models, ToResponse() extension pattern
+
+These conventions written to decisions inbox for Scribe to merge.
+ADR filed: obi-wan-architecture-conventions.md
+Taught to: Han, Leia, Finn via history.md updates.
