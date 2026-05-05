@@ -282,3 +282,57 @@ public static class PresentationExtensions
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction
+
+# README Rewrite — Complete Developer Documentation
+
+**Date:** 2026-05-05  
+**Author:** Padme (Technical Writer)  
+**Status:** Complete
+
+## Decision
+
+Replaced placeholder README with comprehensive developer documentation covering all aspects of the HackathonVotingApp project.
+
+## What Changed
+
+The README now includes:
+
+1. **Project Overview** — Mobile-first voting platform, engineering theme, team composition
+2. **Local Dev Setup** — Exact commands for backend (port 5050) and frontend (port 5173) with Vite proxy config
+3. **Testing Instructions** — Backend (xUnit, dotnet test) and frontend (Vitest, npm run test)
+4. **Complete REST API Reference** — All 9 endpoints documented with request/response examples:
+   - `/health` (GET)
+   - `/presentations` (GET, POST, GET by ID, PUT, DELETE)
+   - `/votes/{presentationId}` (POST with 1-year cookie dedup, GET count)
+5. **Architecture Overview** — Routing layer (thin adapter), services, DTOs, data access, frontend API client pattern
+6. **Project Structure** — Directory tree showing backend, tests, frontend organization
+7. **Vertical Slice Roadmap** — Slices 1–6 with status and scope
+8. **Code Style & Conventions** — C# formatting, TypeScript/React patterns, Tailwind v4, no `tailwind.config.js`
+9. **Contributing Guide** — Branch naming, TDD workflow, architecture principles
+
+## Why This Matters
+
+- **First-time contributor friendly** — New team members can follow the exact dev setup without asking questions
+- **API surface locked down** — All endpoints documented with HTTP methods, status codes, and JSON payloads
+- **Architecture captured** — Service boundaries, DTO separation, thin routing layer all explained
+- **Decision visibility** — References `.squad/decisions.md` for ongoing architectural decisions and conventions
+- **Roadmap clarity** — Vertical slice breakdown with completed and planned slices
+
+## Alignment with Decisions
+
+Drawn directly from active decisions in `.squad/decisions.md`:
+- **API dev port 5050** — documented in dev setup
+- **EF Core InMemory for Slices 1–5, Azure SQL in Slice 6** — documented in architecture section
+- **Thin routing layer (Program.cs as adapter)** — convention enforced in README
+- **Service interfaces (`IPresentationService`, `IVotingService`)** — documented in architecture
+- **DTOs separated from domain models** — pattern documented
+- **Typed frontend API client** — React components use api modules, not `fetch()` directly
+- **Tailwind v4 CSS-based config** — documented in code style
+
+## Next Steps
+
+- Monitor if README needs updates as new slices are completed
+- Update API reference if new endpoints are added
+- Keep vertical slice roadmap in sync with `.squad/decisions.md`
+
+
