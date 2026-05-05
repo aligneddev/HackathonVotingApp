@@ -74,6 +74,23 @@ public class LeaderboardServiceTests
     }
 
     [Fact]
+    public async Task GetLeaderboard_DefaultLimitIs50()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        for (var i = 0; i < 60; i++)
+            db.Presentations.Add(new Presentation { Title = $"Talk {i}", PresenterName = "Speaker" });
+        await db.SaveChangesAsync();
+        var svc = new LeaderboardService(db);
+
+        // Act — throws NotImplementedException (red); default limit should be 50
+        var result = await svc.GetLeaderboardAsync();
+
+        // Assert
+        result.Should().HaveCount(50);
+    }
+
+    [Fact]
     public async Task GetLeaderboard_IncludesVoteCount()
     {
         // Arrange

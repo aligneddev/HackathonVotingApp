@@ -4,5 +4,5 @@ namespace HackathonVotingApp.Api.Services;
 
 public interface ILeaderboardService
 {
-    Task<IEnumerable<LeaderboardEntryResponse>> GetLeaderboardAsync(int limit = 10);
+    Task<IEnumerable<LeaderboardEntryResponse>> GetLeaderboardAsync(int limit = 50);
 }
