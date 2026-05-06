@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { motion } from 'framer-motion';
 
 export default function HomePage() {
@@ -64,18 +65,18 @@ export default function HomePage() {
         Vote for the top 3 presentations. Build something extraordinary.
       </motion.p>
 
-      <motion.button
-        disabled
-        className="px-8 py-4 rounded-xl text-lg font-semibold bg-indigo-600 text-white opacity-50 cursor-not-allowed"
-        aria-disabled="true"
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
-        animate={{ opacity: 0.5, scale: 1 }}
+        animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.4, delay: 0.6 }}
       >
-        Start Voting
-      </motion.button>
-
-      <p className="mt-4 text-xs text-gray-600">Voting opens when the presentations begin</p>
+        <Link
+          to="/vote"
+          className="px-8 py-4 rounded-xl text-lg font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors"
+        >
+          Start Voting
+        </Link>
+      </motion.div>
     </div>
   );
 }
