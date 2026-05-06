@@ -92,10 +92,10 @@ slice 2 and 3 PRs
 - [ ] Omnitech presentation submission - sudo auth
 - [ ] Voting
 - [ ] Secure Admin
+- [ ] Admin - Start/End voting
 - [ ] Admin - edit presentation details
 - [ ] Admin - view votes and results, ranking
 - [ ] Add some voting animations and fun visuals
-- [ ] My presentation submission and details
 - [ ] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests
 - [ ] Aspirify

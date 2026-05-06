@@ -286,6 +286,7 @@ public static class PresentationExtensions
 
 ## Governance
 
+- Do not commit directly to main — all work must go through PRs
 - All meaningful changes require team consensus
 - Document architectural decisions here
 - Keep history focused on work, decisions focused on direction

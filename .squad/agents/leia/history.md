@@ -26,6 +26,18 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 
 ## Learnings
 
+### 2026-05-06 — Slice 3 Voting Page Wired (VotingPage + /vote route)
+
+- **Branch:** main (applied directly)
+- **Tests:** All 18 pass — 3 HomePage ✅, 3 AdminPage ✅, 4 LeaderboardPage ✅, 4 VotingButton ✅, 2 leaderboardApi ✅, 2 votingApi ✅
+- **VotingPage.tsx location:** `src/frontend/src/pages/VotingPage.tsx`
+- **Route added:** `/vote` → `<VotingPage />` in `App.tsx`
+- **HomePage change:** Replaced disabled `<motion.button>` + "Voting opens when..." paragraph with `<motion.div>` wrapping `<Link to="/vote">` — voting is now open.
+- **Test update required:** `HomePage.test.tsx` needed `MemoryRouter` wrapper (Link requires router context) and `is_mobile_first_layout` updated from `getByRole('button', disabled)` to `getByRole('link', { href: '/vote' })`.
+- **VotingPage pattern:** Mirrors `AdminPage` pattern — `useEffect` + `useState`, `presentationApi.getPresentations()`, loading/empty states, dark engineering theme.
+- **Component reuse:** `<VotingButton presentationId={p.id} />` handles all dedup/localStorage logic — VotingPage is purely layout + fetch.
+
+
 ### 2026-05-04 — Slice 1 Frontend Skeleton (Issue #7)
 
 - **Branch:** `leia/7-slice1-frontend`
