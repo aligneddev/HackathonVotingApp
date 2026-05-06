@@ -90,11 +90,11 @@ slice 2 and 3 PRs
 - [ ] voting Rubric addition
 - [ ] More presentation details for submission
 - [ ] Omnitech presentation submission - sudo auth
-- [ ] Voting
+- [ ] Voting - enter notes and feedback on each one, rank 1 through 5
 - [ ] Secure Admin
 - [ ] Admin - Start/End voting
 - [ ] Admin - edit presentation details
-- [ ] Admin - view votes and results, ranking
+- [ ] Admin - view votes and results, ranking (show vote counts, average ranking, order ascending by the average ranking, dialog for feedback people entered)
 - [ ] Add some voting animations and fun visuals
 - [ ] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests
