@@ -1,5 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { MemoryRouter } from 'react-router-dom';
 import AdminPage from '../pages/AdminPage';
 import * as presentationApiModule from '../api/presentationApi';
 
@@ -24,14 +25,14 @@ describe('AdminPage', () => {
 
   it('renders_presentations_heading', () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    render(<AdminPage />);
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
     const heading = screen.getByRole('heading', { name: /presentations/i });
     expect(heading).toBeInTheDocument();
   });
 
   it('renders_add_presentation_button', () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    render(<AdminPage />);
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
     const button = screen.getByRole('button', { name: /add presentation/i });
     expect(button).toBeInTheDocument();
   });
@@ -41,7 +42,7 @@ describe('AdminPage', () => {
       { id: '1', title: 'Amazing Demo', presenterName: 'Jane Dev', description: '', createdAt: new Date().toISOString() },
     ];
     mockApi.getPresentations.mockResolvedValueOnce(mockPresentations);
-    render(<AdminPage />);
+    render(<MemoryRouter><AdminPage /></MemoryRouter>);
     await waitFor(() => { expect(screen.getByText('Amazing Demo')).toBeInTheDocument(); });
   });
 });
