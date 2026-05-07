@@ -6,7 +6,7 @@ namespace HackathonVotingApp.Api.Services;
 
 public class VotingService(AppDbContext db) : IVotingService
 {
-    public async Task<bool> CastVoteAsync(Guid presentationId)
+    public async Task<bool> CastVoteAsync(Guid presentationId, int ranking, string? notes)
     {
         var presentationExists = await db.Presentations.AnyAsync(p => p.Id == presentationId);
         if (!presentationExists)
@@ -16,7 +16,7 @@ public class VotingService(AppDbContext db) : IVotingService
         if (alreadyVoted)
             return false;
 
-        db.Votes.Add(new Vote { PresentationId = presentationId });
+        db.Votes.Add(new Vote { PresentationId = presentationId, Ranking = ranking, Notes = notes });
         await db.SaveChangesAsync();
         return true;
     }

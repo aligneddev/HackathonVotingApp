@@ -90,7 +90,7 @@ slice 2 and 3 PRs
 - [ ] voting Rubric addition
 - [ ] More presentation details for submission
 - [ ] Omnitech presentation submission - sudo auth
-- [ ] Voting - enter notes and feedback on each one, rank 1 through 5
+- [X] Voting - enter notes and feedback on each one, rank 1 through 5
 - [ ] Secure Admin
 - [ ] Admin - Start/End voting
 - [ ] Admin - edit presentation details

@@ -1,6 +1,14 @@
 export const votingApi = {
-  castVote: async (presentationId: string): Promise<void> => {
-    const res = await fetch(`/votes/${presentationId}`, { method: 'POST' });
+  castVote: async (presentationId: string, ranking?: number, notes?: string): Promise<void> => {
+    const body: Record<string, unknown> = {};
+    if (ranking !== undefined) body.ranking = ranking;
+    if (notes !== undefined) body.notes = notes;
+
+    const res = await fetch(`/votes/${presentationId}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    });
     if (!res.ok) throw new Error(`Failed to cast vote: ${res.status}`);
   },
 

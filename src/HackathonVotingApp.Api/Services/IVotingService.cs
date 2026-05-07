@@ -2,7 +2,6 @@ namespace HackathonVotingApp.Api.Services;
 
 public interface IVotingService
 {
-    // Voting logic to be implemented in a future slice
-    Task<bool> CastVoteAsync(Guid presentationId);
+    Task<bool> CastVoteAsync(Guid presentationId, int ranking, string? notes);
     Task<int> GetVoteCountAsync(Guid presentationId);
 }

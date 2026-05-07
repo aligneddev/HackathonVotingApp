@@ -88,13 +88,16 @@ var votes = app.MapGroup("/votes");
 
 votes.MapPost(
     "/{presentationId:guid}",
-    async (Guid presentationId, IVotingService votingService, HttpContext httpContext) =>
+    async (Guid presentationId, HackathonVotingApp.Api.Models.CastVoteRequest request, IVotingService votingService, HttpContext httpContext) =>
     {
         var cookieKey = $"hackathon-voted-{presentationId}";
         if (httpContext.Request.Cookies.ContainsKey(cookieKey))
             return Results.Conflict();
 
-        var success = await votingService.CastVoteAsync(presentationId);
+        if (request.Ranking < 1 || request.Ranking > 5)
+            return Results.BadRequest(new { error = "Ranking must be between 1 and 5." });
+
+        var success = await votingService.CastVoteAsync(presentationId, request.Ranking, request.Notes);
         if (!success)
             return Results.NotFound();
 
