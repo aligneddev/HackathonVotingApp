@@ -604,3 +604,12 @@ Slice 3 (Voting) backend endpoints were fully implemented by Han. `VotingButton.
 - **Updated:** `src/frontend/src/App.tsx` — added `/vote` route
 - **Updated:** `src/frontend/src/pages/HomePage.tsx` — enabled CTA Link
 - **Updated:** `src/frontend/src/__tests__/HomePage.test.tsx` — updated assertions + MemoryRouter
+
+---
+
+## 2026-05-07
+
+### 20260507-110324: User directive — shared slice branches + PR workflow
+**By:** Kevin Logan (via Copilot)
+**What:** Always use branches and PRs. All agents on a slice collaborate on the SAME branch (e.g. slice/6-azure-infra), not separate per-agent branches. One PR per slice, merged to main when slice is complete.
+**Why:** User request — enforce clean git hygiene and reviewable history.
