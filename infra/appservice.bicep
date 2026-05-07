@@ -10,7 +10,7 @@ param corsOrigin string = ''
 var planName = '${appName}-${environmentName}-plan'
 var webAppName = '${appName}-${environmentName}-api'
 
-resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
+resource appServicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: planName
   location: location
   sku: {
@@ -23,7 +23,7 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   }
 }
 
-resource webApp 'Microsoft.Web/sites@2023-01-01' = {
+resource webApp 'Microsoft.Web/sites@2024-11-01' = {
   name: webAppName
   location: location
   properties: {

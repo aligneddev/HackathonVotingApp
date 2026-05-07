@@ -8,7 +8,7 @@ param sqlAdminPassword string
 var serverName = '${appName}-${environmentName}-sql'
 var databaseName = '${appName}-db'
 
-resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = {
+resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
   name: serverName
   location: location
   properties: {
@@ -19,7 +19,7 @@ resource sqlServer 'Microsoft.Sql/servers@2023-05-01-preview' = {
   }
 }
 
-resource sqlFirewallAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-05-01-preview' = {
+resource sqlFirewallAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023-08-01' = {
   parent: sqlServer
   name: 'AllowAzureServices'
   properties: {
@@ -28,7 +28,7 @@ resource sqlFirewallAllowAzureServices 'Microsoft.Sql/servers/firewallRules@2023
   }
 }
 
-resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-05-01-preview' = {
+resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
   parent: sqlServer
   name: databaseName
   location: location
