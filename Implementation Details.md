@@ -89,10 +89,73 @@ slice 2 and 3 PRs
 /grill-me-with-docs
 inside the codespace, but the work account couldn't push to the repo, had to make a fork
 
-### Slice 6
+### Slice 6 - to Azure
 `npx skills@latest add mattpocock/skills` to global: 5/5/26 #ai-skills 
 /setup-matt-popcock-skills
 - scanned the repo, asked about Github issues, tags, docs/adr
+ Yes — one-time manual setup before first run:
+
+  1. Create resource group
+
+   az login
+   az group create -n omnihackathon-rg -l centralus
+
+  2. Create app registration + OIDC federated credential
+
+   # Create app reg
+   az ad app create --display-name "hackathon-voting-cicd"
+   # Note the appId output → AZURE_CLIENT_ID
+   
+   # Create service principal
+   az ad sp create --id 95912045-bd70-4bef-96ff-61628803ac3f
+   
+   # Add federated credential (GitHub OIDC)
+   -- worked in Gitbash, not PS
+   az ad app federated-credential create \
+     --id 95912045-bd70-4bef-96ff-61628803ac3f \
+     --parameters '{
+       "name":"github-actions",
+       "issuer":"https://token.actions.githubusercontent.com",
+       "subject":"repo:aligneddev/HackathonVotingApp:ref:refs/heads/main",
+       "audiences":["api://AzureADTokenExchange"]
+     }'
+
+  # Assign Contributor on resource group
+   az role assignment create \
+     --assignee 95912045-bd70-4bef-96ff-61628803ac3f \
+     --role Contributor \
+     --scope /subscriptions/fa3125b0-a692-4be8-9da5-78bc27fa96b8/resourceGroups/omnihackathon-rg
+
+error: (MissingSubscription) The request did not have a subscription or a valid tenant level resource provider.
+Code: MissingSubscription
+Message: The request did not have a subscription or a valid tenant level resource provider.
+
+  3. Set 4 GitHub secrets (Settings → Secrets → Actions):
+
+  ┌─────────────────────────┬───────────────────────────────────────────┐
+  │ Secret                  │ Value                                     │
+  ├─────────────────────────┼───────────────────────────────────────────┤
+  │ AZURE_CLIENT_ID         │ 95912045-bd70-4bef-96ff-61628803ac3f                          │
+  ├─────────────────────────┼───────────────────────────────────────────┤
+  │ AZURE_TENANT_ID         │ az account show --query tenantId -o tsv   │
+  ├─────────────────────────┼───────────────────────────────────────────┤
+  │ AZURE_SUBSCRIPTION_ID   │ az account show --query id -o tsv         │
+  ├─────────────────────────┼───────────────────────────────────────────┤
+  │ SQL_ADMIN_PASSWORD      │ your choice                               │
+  └─────────────────────────┴───────────────────────────────────────────┘
+
+  4. Run workflow → infra deploys → SWA resource created
+
+  5. Grab SWA token (5th and final secret):
+
+   az staticwebapp secrets list \
+     --name hackathon-voting-dev-swa \
+     --resource-group hackathon-rg \
+     --query "properties.apiKey" -o tsv
+
+  Add as AZURE_STATIC_WEB_APPS_API_TOKEN → re-run workflow → done.
+
+
 
 
 ## TODO

@@ -7,37 +7,14 @@ on:
     branches: [ main ]
 
 env:
-  AZURE_RESOURCE_GROUP: ${{ vars.AZURE_RESOURCE_GROUP }}
+  AZURE_RESOURCE_GROUP: hackathon-rg
   AZURE_APP_NAME: hackathon-voting
-  AZURE_ENVIRONMENT: prod
+  AZURE_ENVIRONMENT: dev
 
 jobs:
-  detect-changes:
-    name: Detect changed paths
-    runs-on: ubuntu-latest
-    outputs:
-      dotnet: ${{ steps.filter.outputs.dotnet }}
-      frontend: ${{ steps.filter.outputs.frontend }}
-    steps:
-      - uses: actions/checkout@v4
-      - name: Check for .NET project
-        id: filter
-        run: |
-          if find . -name "*.sln" -o -name "*.slnx" | grep -q .; then
-            echo "dotnet=true" >> $GITHUB_OUTPUT
-          else
-            echo "dotnet=false" >> $GITHUB_OUTPUT
-          fi
-          if [ -f "src/frontend/package.json" ]; then
-            echo "frontend=true" >> $GITHUB_OUTPUT
-          else
-            echo "frontend=false" >> $GITHUB_OUTPUT
-          fi
-
+  # ── Build & Test ────────────────────────────────────────────────────────────
   build-and-test-api:
     name: .NET API — Build & Test
-    needs: detect-changes
-    if: needs.detect-changes.outputs.dotnet == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -45,9 +22,9 @@ jobs:
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
         with:
-          dotnet-version: '10.x'
+          dotnet-version: '10.0.x'
 
-      - name: Restore dependencies
+      - name: Restore
         run: dotnet restore
 
       - name: Build
@@ -60,17 +37,19 @@ jobs:
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: dotnet publish src/HackathonVotingApp.Api/HackathonVotingApp.Api.csproj --configuration Release --output ./publish/api
 
+      - name: Zip API for deployment
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        run: cd ./publish/api && zip -r ../../api.zip .
+
       - name: Upload API artifact
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/upload-artifact@v4
         with:
           name: api
-          path: ./publish/api
+          path: ./api.zip
 
   build-and-test-frontend:
     name: React Frontend — Build & Test
-    needs: detect-changes
-    if: needs.detect-changes.outputs.frontend == 'true'
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -78,7 +57,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Setup Node.js
+      - name: Setup Node.js 22
         uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -94,30 +73,29 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Upload frontend artifact
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend
-          path: src/frontend/dist
-
+  # ── Deploy (main branch only) ───────────────────────────────────────────────
   deploy-infra:
-    name: Deploy — Azure Infrastructure
+    name: Deploy — Azure Infrastructure (Bicep)
     needs: [build-and-test-api, build-and-test-frontend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     outputs:
       webAppName: ${{ steps.deploy.outputs.webAppName }}
       staticWebAppName: ${{ steps.deploy.outputs.staticWebAppName }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
-      - name: Deploy Bicep
+      - name: Deploy Bicep Infrastructure
         id: deploy
         uses: azure/arm-deploy@v2
         with:
@@ -129,48 +107,39 @@ jobs:
             sqlAdminPassword=${{ secrets.SQL_ADMIN_PASSWORD }}
 
   deploy-api:
-    name: Deploy — .NET API to App Service
+    name: Deploy — .NET API → App Service
     needs: deploy-infra
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
       - name: Download API artifact
         uses: actions/download-artifact@v4
         with:
           name: api
-          path: ./publish/api
+          path: .
 
-      - name: Azure Login
+      - name: Azure Login (OIDC)
         uses: azure/login@v2
         with:
-          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          client-id: ${{ secrets.AZURE_CLIENT_ID }}
+          tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+          subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
 
       - name: Deploy to App Service
         uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ needs.deploy-infra.outputs.webAppName }}
-          package: ./publish/api
+          package: ./api.zip
 
   deploy-frontend:
-    name: Deploy — React Frontend to Static Web App
-    needs: deploy-infra
+    name: Deploy — React Frontend → Static Web App
+    needs: [deploy-infra, build-and-test-frontend]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: 'npm'
-          cache-dependency-path: src/frontend/package-lock.json
-
-      - name: Install dependencies
-        working-directory: src/frontend
-        run: npm ci
-
-      - name: Build frontend
-        working-directory: src/frontend
-        run: npm run build
 
       - name: Deploy to Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
