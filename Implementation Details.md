@@ -85,6 +85,15 @@ slice 2 and 3 PRs
   │                               │ shows_rank_numbers, shows_vote_counts     │    │
   └───────────────────────────────┴───────────────────────────────────────────┴────┘
 
+### Slice 5
+/grill-me-with-docs
+inside the codespace, but the work account couldn't push to the repo, had to make a fork
+
+### Slice 6
+`npx skills@latest add mattpocock/skills` to global: 5/5/26 #ai-skills 
+/setup-matt-popcock-skills
+- scanned the repo, asked about Github issues, tags, docs/adr
+
 
 ## TODO
 - [ ] voting Rubric addition

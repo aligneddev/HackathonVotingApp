@@ -27,12 +27,31 @@ if (allowedOrigins.Length > 0)
 }
 
 builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddDbContext<AppDbContext>(opt => opt.UseInMemoryDatabase("HackathonVotingApp"));
+
+var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+if (!string.IsNullOrEmpty(sqlConnectionString))
+{
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseSqlServer(sqlConnectionString));
+}
+else
+{
+    builder.Services.AddDbContext<AppDbContext>(opt =>
+        opt.UseInMemoryDatabase("HackathonVotingApp"));
+}
+
 builder.Services.AddScoped<IPresentationService, PresentationService>();
 builder.Services.AddScoped<IVotingService, VotingService>();
 builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
 var app = builder.Build();
+
+if (!app.Environment.IsDevelopment() && !string.IsNullOrEmpty(sqlConnectionString))
+{
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    await db.Database.EnsureCreatedAsync();
+}
 
 if (allowedOrigins.Length > 0)
 {

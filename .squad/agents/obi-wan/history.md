@@ -84,3 +84,11 @@ Kevin approved and the team applied a round of architecture improvements. Formal
 These conventions written to decisions inbox for Scribe to merge.
 ADR filed: obi-wan-architecture-conventions.md
 Taught to: Han, Leia, Finn via history.md updates.
+
+### 2026-05-07: Shared Slice Branch Policy (Kevin Directive)
+
+- Kevin directive: all agents on a slice must collaborate on the **same shared branch**. No per-agent branches for slice work.
+- Branch naming: `slice/{N}-{slug}` (e.g., `slice/6-azure-infra`). All agents push to this branch. One PR to main per slice.
+- Obi-Wan creates the slice branch at slice start; agents pull it before working.
+- Updated `.squad/skills/trunk-based-delivery/SKILL.md` to reflect this. Decision filed to inbox.
+- `slice/6-azure-infra` branch created and pushed to origin for Poe's Slice 6 work.

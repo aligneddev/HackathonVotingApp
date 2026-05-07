@@ -2,6 +2,11 @@ param location string
 param environmentName string
 param appName string
 
+@secure()
+param sqlConnectionString string
+
+param corsOrigin string = ''
+
 var planName = '${appName}-${environmentName}-plan'
 var webAppName = '${appName}-${environmentName}-api'
 
@@ -9,10 +14,13 @@ resource appServicePlan 'Microsoft.Web/serverfarms@2023-01-01' = {
   name: planName
   location: location
   sku: {
-    name: 'F1'  // Free tier
+    name: 'F1' // Free tier
     tier: 'Free'
   }
-  kind: 'app'
+  kind: 'linux'
+  properties: {
+    reserved: true
+  }
 }
 
 resource webApp 'Microsoft.Web/sites@2023-01-01' = {
@@ -22,11 +30,22 @@ resource webApp 'Microsoft.Web/sites@2023-01-01' = {
     serverFarmId: appServicePlan.id
     httpsOnly: true
     siteConfig: {
-      netFrameworkVersion: 'v10.0'
+      linuxFxVersion: 'DOTNETCORE|10.0'
       appSettings: [
         {
           name: 'ASPNETCORE_ENVIRONMENT'
-          value: environmentName
+          value: environmentName == 'dev' ? 'Development' : 'Production'
+        }
+        {
+          name: 'Cors__AllowedOrigins__0'
+          value: corsOrigin
+        }
+      ]
+      connectionStrings: [
+        {
+          name: 'DefaultConnection'
+          connectionString: sqlConnectionString
+          type: 'SQLAzure'
         }
       ]
     }
