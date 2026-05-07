@@ -277,6 +277,56 @@ public static class PresentationExtensions
 
 ** Code Formatting:** follow the .editorconfig (create one if needed), run `dotnet csharpier format .` for C#, and `prettier --write .` for TypeScript before committing.
 
+### 2026-05-07: ResultsPage Tests and Implementation (Slice 5)
+**Date:** 2026-05-07
+**Author:** Finn (Tester) & Leia (Frontend Dev)
+**Status:** Complete — all 28 frontend tests passing
+
+#### Test Phase Summary (Finn)
+Test file: `src/frontend/src/pages/ResultsPage.test.tsx`
+
+**Behavioral Contracts (Updated):**
+1. Loading state: indicator with "loading" text while API call in flight
+2. Page heading: `/results/i` regex present after load
+3. Prize labels: 🥇, 🥈, 🥉 for top 3 only (even when 5+ entries present)
+4. All entries rendered: ALL entries' titles and presenterNames visible (not just top 3)
+5. Entries 4+ visible: Appear in DOM without prize labels (no "4th Place" or "5th Place" text)
+6. Fewer than 3 entries: Render without empty slots or errors
+7. Empty results: No prize cards, no crash
+8. No polling: API called exactly once on mount
+
+**Key Change from v1:** Spec updated from "show top 3 only" → "show ALL entries with prize labels for top 3 only"
+
+**Test Design:**
+- Mock pattern: `vi.mock("../api/leaderboardApi")` (not global.fetch)
+- Wrapper: `<MemoryRouter>` for Link navigation support
+- Async handling: `waitFor()` for post-load assertions
+- Removal of old test: "does NOT render 4th/5th" replaced with "renders 4th/5th without labels"
+
+#### Implementation Phase Summary (Leia)
+Component: `src/frontend/src/pages/ResultsPage.tsx`
+
+**Decision 1: PRIZES array for medal/label mapping**
+- Fixed 3-element array maps index → {medal, label}
+- Returns undefined for index ≥ 3 (zero branching)
+- Naturally handles edge cases
+
+**Decision 2: Medal + label co-located in one `<span>`**
+- Renders `"🥇 1st Place"` as single semantic unit
+- Supports both Finn's `/🥇/` and `/1st place/i` regex queries
+
+**Decision 3: Loading state via null sentinel**
+- Type: `LeaderboardEntry[] | null`
+- null = hasn't loaded yet
+- [] = loaded with no data
+- Matches LeaderboardPage pattern
+
+**Decision 4: `/results` route in App.tsx**
+- Added `<Route path="/results" element={<ResultsPage />} />`
+- No nav link at this time — post-hackathon admin view
+
+**Result:** All 28 frontend tests passing. Route `/results` wired.
+
 ### 2026-05-05: Slice PR Policy
 **By:** Kevin Logan (via Copilot)
 **What:** Each slice = one PR. All tests (backend + frontend) must be green before the PR is created. GitHub issues for all work items in the slice must be created and linked to the PR. PR is not opened until the full slice is done and verified.

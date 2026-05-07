@@ -3,6 +3,7 @@ import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import VotingPage from './pages/VotingPage';
+import ResultsPage from './pages/ResultsPage';
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
         <Route path="/admin" element={<AdminPage />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
         <Route path="/vote" element={<VotingPage />} />
+        <Route path="/results" element={<ResultsPage />} />
       </Routes>
     </BrowserRouter>
   );

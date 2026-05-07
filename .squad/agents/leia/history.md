@@ -26,6 +26,17 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 
 ## Learnings
 
+### 2026-05-07 — ResultsPage (Finn's 10 tests → all 28 passing)
+
+- **File:** `src/frontend/src/pages/ResultsPage.tsx`
+- **Route added:** `/results` → `<ResultsPage />` in `App.tsx`
+- **Tests:** All 28 pass — 18 existing + 10 new ResultsPage tests ✅
+- **Pattern:** Mirrors VotingPage/LeaderboardPage — `useEffect` + `useState`, `leaderboardApi.getLeaderboard()`, loading state via `null` sentinel.
+- **Prize label logic:** A `PRIZES` array of 3 objects (`{ medal, label }`) indexed by position. `PRIZES[index]` returns `undefined` for entries 4+, so no prize badge renders — clean and index-safe.
+- **Loading text:** "Loading results…" — matches `/loading/i` regex used in Finn's test.
+- **Medal + label in one `<span>`:** `{prize.medal} {prize.label}` renders as `"🥇 1st Place"`, satisfying both `getByText(/🥇/)` and `getByText(/1st place/i)` in a single DOM node.
+- **Styling:** Tailwind v4, dark engineering theme, consistent with VotingPage.
+
 ### 2026-05-06 — Slice 3 Voting Page Wired (VotingPage + /vote route)
 
 - **Branch:** main (applied directly)
@@ -37,6 +48,34 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 - **VotingPage pattern:** Mirrors `AdminPage` pattern — `useEffect` + `useState`, `presentationApi.getPresentations()`, loading/empty states, dark engineering theme.
 - **Component reuse:** `<VotingButton presentationId={p.id} />` handles all dedup/localStorage logic — VotingPage is purely layout + fetch.
 
+
+### Slice 5 — ResultsPage Implementation (2026-05-07)
+
+**Date:** 2026-05-07 | **Branch:** (merged directly) | **Status:** ✅ Complete
+
+Implemented `ResultsPage.tsx` per Finn's updated test spec (all 28 frontend tests passing).
+
+- **Component:** `src/frontend/src/pages/ResultsPage.tsx`
+  - Fetches via `leaderboardApi.getLeaderboard()` on mount (no polling)
+  - Loading state: `entries: LeaderboardEntry[] | null` (null = loading, [] = empty)
+  - Shows loading indicator with "loading" text
+  - Renders page heading matching `/results/i`
+  - Displays ALL entries (not filtered to top 3)
+  - Prize labels (🥇/🥈/🥉 + text) for top 3 only via PRIZES array
+  - Entries 4+ rendered without medals
+
+- **Route wiring:** `src/frontend/src/App.tsx` — added `<Route path="/results" element={<ResultsPage />} />`
+
+- **Design pattern:** PRIZES array (`{ medal, label }[]`) indexed by position — returns undefined for index ≥ 3, zero branching
+  - Medal + label in single semantic `<span>`
+  - Matches both Finn's `/🥇/` and `/1st place/i` queries in same node
+
+- **Test results:** All 28 frontend tests passing (10 new ResultsPage + 18 existing)
+
+- **Key decisions applied:**
+  - Render ALL entries (spec changed from v1's "top 3 only")
+  - Prize labels for top 3 only
+  - No nav link yet — post-hackathon admin view
 
 ### 2026-05-04 — Slice 1 Frontend Skeleton (Issue #7)
 
