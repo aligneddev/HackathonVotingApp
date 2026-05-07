@@ -25,6 +25,24 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-han.md` for full details.
 
 ## Learnings
 
+### 2026-05-07: Vote Ranking Feature
+
+**Task:** Add `Ranking` (1–5) and `Notes` (optional string) to the Vote model and wire up through service and endpoint.
+
+**Files changed:**
+- `src/HackathonVotingApp.Api/Models/Vote.cs` — added `int Ranking` and `string? Notes` properties
+- `src/HackathonVotingApp.Api/Models/VoteDtos.cs` — new file: `CastVoteRequest(int Ranking, string? Notes)` record
+- `src/HackathonVotingApp.Api/Services/IVotingService.cs` — updated `CastVoteAsync` to accept `ranking` and `notes`
+- `src/HackathonVotingApp.Api/Services/VotingService.cs` — stores ranking and notes on the new `Vote` entity
+- `src/HackathonVotingApp.Api/Program.cs` — endpoint now accepts `CastVoteRequest` body; validates `ranking` 1–5 before calling service (400 if invalid)
+
+**API contract:** `POST /votes/{presentationId}` now requires JSON body `{ "ranking": 1-5, "notes": "optional" }`.  
+Decision written to `.squad/decisions/inbox/han-vote-ranking-api.md` for Leia.
+
+**Validation placement:** Ranking bounds check lives in the route handler (thin adapter concern), not the service. Service trusts callers to pass a valid ranking value.
+
+**Build result:** `Build succeeded with 1 warning(s)` — NU1510 SignalR warning is pre-existing, not introduced by this change.
+
 ### 2026-05-04: Slice 1 — Health Endpoint (TDD Green Phase)
 
 **Branch:** `han/6-slice1-api-skeleton`  
@@ -103,3 +121,17 @@ Kevin approved standing conventions for all backend work:
 - **DTOs live separately.** Entity in `Models/{Domain}.cs`, DTO in `Models/{Domain}Dtos.cs`, mapped via `ToResponse()` extension. Never expose EF entities directly on the API surface.
 - **Vote seam pattern.** When Kevin announces a new feature for a future slice, add the interface + stub + DI registration in the current slice so the seam exists. Do not wait until the feature slice to introduce the type.
 
+
+
+**Date:** 2026-05-07
+
+- Added Ranking (int 1–5, required) and Notes (string, optional) to Vote domain model
+- Created CastVoteRequest DTO: public record CastVoteRequest(int Ranking, string? Notes)
+- Updated IVotingService.CastVoteAsync signature to accept ranking + notes
+- Implemented VotingService.CastVoteAsync with 1–5 validation, returns 400 Bad Request if invalid
+- Updated POST /votes/{presentationId} handler to parse JSON body and pass to service
+- Build green — no compilation errors
+- Decision documented: .squad/decisions.md (2026-05-07 section)
+- Orchestration log: .squad/orchestration-log/2026-05-07T15-10-44-807-05-00-han.md
+
+**Status:** Complete — ready for frontend integration (Leia's RankedVotingList)

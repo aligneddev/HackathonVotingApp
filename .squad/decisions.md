@@ -387,10 +387,146 @@ Drawn directly from active decisions in `.squad/decisions.md`:
 - **Typed frontend API client** — React components use api modules, not `fetch()` directly
 - **Tailwind v4 CSS-based config** — documented in code style
 
+### 2026-05-07: API Contract: Vote Ranking — POST /votes/{presentationId}
+**Author:** Han
+**Date:** 2026-05-07
+**Status:** Implemented
+
+---
+
+# API Contract: Vote Ranking — POST /votes/{presentationId}
+
+**Author:** Han  
+**Date:** 2026-05-07  
+**Status:** Implemented
+
+---
+
+## Endpoint
+
+```
+POST /votes/{presentationId}
+```
+
+## Request Body (JSON)
+
+```json
+{
+  "ranking": 3,
+  "notes": "Great demo, loved the live coding."
+}
+```
+
+| Field     | Type     | Required | Constraints          |
+|-----------|----------|----------|----------------------|
+| `ranking` | `int`    | Yes      | 1–5 inclusive        |
+| `notes`   | `string` | No       | Free-text, nullable  |
+
+## Responses
+
+| Status | Meaning                                              |
+|--------|------------------------------------------------------|
+| `201`  | Vote accepted; cookie set for deduplication          |
+| `400`  | `ranking` is outside 1–5                             |
+| `404`  | Presentation not found                               |
+| `409`  | Browser already voted for this presentation (cookie) |
+
+### 400 Body
+
+```json
+{ "error": "Ranking must be between 1 and 5." }
+```
+
+## Cookie Deduplication (unchanged)
+
+Cookie key: `hackathon-voted-{presentationId}`  
+MaxAge: 365 days  
+One vote per presentation per browser — still enforced before the body is read.
+
+## C# DTO (source of truth)
+
+```csharp
+public record CastVoteRequest(int Ranking, string? Notes);
+```
+
+Located in `src/HackathonVotingApp.Api/Models/VoteDtos.cs`.
+
+---
+
+**Leia:** update all `POST /votes/{presentationId}` calls to include the JSON body above. `ranking` is required; `notes` is optional.
+
+
+---
+
+### 2026-05-07: UI Decision: Ranked Voting UI
+**Author:** Leia (Frontend Dev)
+**Date:** 2026-05-07
+**Status:** Implemented
+
+---
+
+# UI Decision: Ranked Voting UI
+
+**Author:** Leia (Frontend Dev)  
+**Date:** 2026-05-07  
+**Status:** Implemented
+
+---
+
+## Context
+
+VotingPage previously showed a simple list with one VotingButton per presentation (single vote per item, localStorage dedup per ID). Han is updating `POST /votes/{presentationId}` to accept `{ ranking, notes }` JSON body. The new UX requires voters to rank all presentations 1–N and optionally add per-presentation notes.
+
+---
+
+## Decisions
+
+### 1. Controlled component pattern for RankedVotingList
+
+`RankedVotingList` is a **controlled component** — VotingPage owns `RankedVotingListItem[]` state and passes it down with an `onChange` callback. RankedVotingList only manages transient drag state (`dragIndex`, `dragOverIndex`) locally.
+
+**Why:** VotingPage needs the final ranked order and notes at submit time. Lifting state to VotingPage keeps submission logic co-located with the data it submits, avoids imperative refs, and makes the component easy to test.
+
+### 2. Native HTML5 drag-and-drop (no library)
+
+Used `draggable` + `onDragStart`/`onDragOver`/`onDrop`/`onDragEnd` directly. No `react-beautiful-dnd`, `dnd-kit`, or similar.
+
+**Why:** Per task constraint — no new npm packages. Native API is sufficient for a list reorder use case. Arrow buttons provide the accessible fallback.
+
+### 3. `ranking` made optional in `votingApi.castVote`
+
+Signature: `castVote(presentationId: string, ranking?: number, notes?: string)` — `ranking` is `?` optional rather than required.
+
+**Why:** `VotingButton.tsx` must not be modified (it may be used elsewhere) and calls `castVote(presentationId)` with no ranking. Making `ranking` required would cause a TypeScript compile error in VotingButton. Optional preserves backwards compatibility while still supporting the new ranked API contract. When called without `ranking`, the POST body is `{}` (empty object) — the backend will receive an empty body for VotingButton usages.
+
+**Trade-off:** The type system no longer enforces that ranking is always provided on new call sites. Documented here so future contributors know the intent.
+
+### 4. Session dedup via `voted-session-{sorted-IDs}` localStorage key
+
+After successful submit, sets `localStorage.setItem('voted-session-<sorted presentation IDs>', 'true')`. On mount, checks this key and shows the success state immediately if found.
+
+**Why:** Prevents re-voting after page refresh. Sorted IDs create a stable key regardless of server-returned order. Simple and no server round-trip needed for dedup check.
+
+### 5. Sequential submission (not parallel)
+
+`castVote` calls are made in `for` loop (sequential), not `Promise.all`.
+
+**Why:** Backend uses cookie-based dedup (409 Conflict). If we fire requests in parallel, a 409 from one might race with another and the error handling is ambiguous. Sequential makes the error path clear — first 409 stops the loop and sets the error state.
+
+---
+
+## Files Changed
+
+- `src/frontend/src/api/votingApi.ts` — updated `castVote` signature + JSON body
+- `src/frontend/src/components/RankedVotingList.tsx` — new component
+- `src/frontend/src/pages/VotingPage.tsx` — replaced VotingButton list with RankedVotingList + Submit button
+
+
 ## Next Steps
 
 - Monitor if README needs updates as new slices are completed
 - Update API reference if new endpoints are added
 - Keep vertical slice roadmap in sync with `.squad/decisions.md`
+
 
 

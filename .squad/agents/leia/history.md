@@ -26,6 +26,29 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-leia.md` for full details.
 
 ## Learnings
 
+### 2026-05-07 — Ranked Voting UI (RankedVotingList + VotingPage redesign)
+
+- **New component:** `src/frontend/src/components/RankedVotingList.tsx`
+  - Controlled component — parent (VotingPage) owns `RankedVotingListItem[]` state, passes `items` + `onChange` callback
+  - Native HTML5 drag-and-drop: `draggable`, `onDragStart`/`onDragOver`/`onDrop`/`onDragEnd` — no external library
+  - Drag visual feedback: dragging row → `opacity-40`; drop target → `ring-1 ring-indigo-500 border-indigo-500`
+  - Arrow buttons (↑/↓) as accessible alternative; disabled at boundaries
+  - Notes textarea: `maxLength={500}`, `resize-y`, `aria-label` per item for accessibility
+  - Rank badge: `bg-indigo-700` rounded pill showing `index + 1`
+
+- **Updated VotingPage:** `src/frontend/src/pages/VotingPage.tsx`
+  - Removed VotingButton usage; VotingButton.tsx untouched (used elsewhere)
+  - Session dedup: `voted-session-{sorted-ids}` localStorage key — checked on mount
+  - Submit loop: sequential `castVote(id, ranking, notes)` per item (ranking = index+1)
+  - 409 Conflict → sets submitted true + shows "already voted" error message
+
+- **Updated votingApi:** `src/frontend/src/api/votingApi.ts`
+  - `castVote(presentationId, ranking?, notes?)` — `ranking` optional to preserve VotingButton backwards compat
+  - Sends JSON body with `Content-Type: application/json`; omits undefined fields
+
+- **Backwards compat:** making `ranking` optional in TS avoids TypeScript errors in VotingButton (which calls `castVote(id)` only)
+- **Tests:** All 28 pass — no regressions ✅
+
 ### 2026-05-07 — ResultsPage (Finn's 10 tests → all 28 passing)
 
 - **File:** `src/frontend/src/pages/ResultsPage.tsx`
@@ -116,3 +139,24 @@ Kevin approved standing conventions for all frontend work:
 - **Frontend types mirror backend DTOs.** The `Presentation` interface in `presentationApi.ts` should match `PresentationResponse` from the backend. When the backend DTO changes, update the frontend interface. Shared contract = no surprises.
 - **Ubiquitous language on the frontend too.** Variable names, component props, state names — use the domain word. `presentations`, not `items`. `presenterName`, not `name`.
 
+
+
+**Date:** 2026-05-07
+
+- Created new RankedVotingList component (controlled component pattern)
+  - Owned state: RankedVotingListItem[] (id, ranking, notes) lifted to VotingPage
+  - Native HTML5 drag-drop: draggable + onDragStart/onDragOver/onDrop/onDragEnd
+  - Arrow buttons (up/down) for keyboard-accessible ranking adjustment
+  - Notes textarea per presentation (optional feedback)
+- Updated VotingPage to replace simple vote button list with RankedVotingList
+  - Changed from immediate vote on button click → ranked list + Submit button
+  - Submission: sequential castVote calls (not parallel) to respect cookie dedup
+  - Session dedup: oted-session-{sorted IDs} localStorage key (no server round-trip)
+- Updated otingApi.castVote signature: castVote(presentationId, ranking?, notes?)
+  - Made anking optional for backward compat (VotingButton may call without it)
+- All 28 frontend tests passing
+- 0 TypeScript errors
+- Decision documented: .squad/decisions.md (2026-05-07 section)
+- Orchestration log: .squad/orchestration-log/2026-05-07T15-10-44-807-05-00-leia.md
+
+**Status:** Complete — RankedVotingList fully integrated with Han's backend API
