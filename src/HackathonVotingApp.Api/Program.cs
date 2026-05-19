@@ -46,11 +46,11 @@ builder.Services.AddScoped<ILeaderboardService, LeaderboardService>();
 
 var app = builder.Build();
 
-if (!app.Environment.IsDevelopment() && !string.IsNullOrEmpty(sqlConnectionString))
+if (!string.IsNullOrEmpty(sqlConnectionString))
 {
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
-    await db.Database.EnsureCreatedAsync();
+    await db.Database.MigrateAsync();
 }
 
 if (allowedOrigins.Length > 0)
