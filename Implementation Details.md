@@ -96,7 +96,7 @@ inside the codespace, but the work account couldn't push to the repo, had to mak
  Yes — one-time manual setup before first run:
  
  see deploy.md
-
+had to make several fixes, including api route, EF Migrations
 
 
 

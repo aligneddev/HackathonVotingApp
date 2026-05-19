@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import { presentationApi, Presentation } from '../api/presentationApi';
 import { votingApi } from '../api/votingApi';
 import RankedVotingList, { RankedVotingListItem } from '../components/RankedVotingList';
@@ -55,17 +54,6 @@ export default function VotingPage() {
 
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100">
-      <nav className="bg-gray-900 border-b border-gray-800 px-4 py-3">
-        <div className="max-w-3xl mx-auto flex gap-6">
-          <Link to="/" className="text-gray-400 hover:text-indigo-400 text-sm font-medium transition-colors">
-            Home
-          </Link>
-          <Link to="/leaderboard" className="text-gray-400 hover:text-indigo-400 text-sm font-medium transition-colors">
-            Leaderboard
-          </Link>
-        </div>
-      </nav>
-
       <div className="max-w-3xl mx-auto p-4 md:p-8">
         <h1 className="text-2xl font-bold text-indigo-400 mb-2">Rank the Presentations</h1>
         <p className="text-gray-400 text-sm mb-6">
