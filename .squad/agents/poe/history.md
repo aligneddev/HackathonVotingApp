@@ -25,6 +25,20 @@ Kevin mandated Trunk Based Delivery and Continuous Delivery as the team's delive
 
 All engineering norms have been encoded and merged to `.squad/decisions/decisions.md`. Orchestration logs written. Team has shared understanding of TDD (with Kevin gate), MSE principles, vertical slices, quality-over-quantity, trunk-based delivery, and continuous delivery practices.
 
+### 2026-05-07 — CI/CD Pipeline: OIDC GitHub Actions Workflows
+
+**Files changed:** `.github/workflows/ci.yml` (updated), `docs/deploy.md` (created)  
+**Decision file:** `.squad/decisions/inbox/poe-cicd-workflows.md`
+
+**Key decisions:**
+- Replaced legacy `AZURE_CREDENTIALS` JSON blob with OIDC federated credentials (`AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`). `id-token: write` permission scoped to `deploy-infra` and `deploy-api` jobs only.
+- Kept a single `ci.yml` (CI + CD) — trunk-based delivery makes tight coupling of build→test→deploy natural.
+- Removed `detect-changes` job: its conditional-skip pattern caused `deploy-infra` to be silently skipped when either build job was skipped (not failed). Always run both build jobs — they're fast.
+- API: `dotnet publish` → zip → `azure/webapps-deploy@v3` zip deploy (correct for F1, no deployment slots).
+- Frontend: SWA action builds from source (`app_location: src/frontend`, `output_location: dist`); `build-and-test-frontend` acts as quality gate before deploy runs.
+- `AZURE_STATIC_WEB_APPS_API_TOKEN` is a chicken-and-egg secret: must be fetched after first manual `az deployment group create`. Documented in `docs/deploy.md`.
+- Resource group hardcoded as `hackathon-rg`; `AZURE_ENVIRONMENT: dev`.
+
 ### 2026-05-04 — Slice 1: Bicep Infra Skeleton + GitHub Actions CI
 
 **Branch:** `poe/3-slice1-infra-skeleton`

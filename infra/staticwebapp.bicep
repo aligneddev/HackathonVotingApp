@@ -4,7 +4,7 @@ param appName string
 
 var staticWebAppName = '${appName}-${environmentName}-swa'
 
-resource staticWebApp 'Microsoft.Web/staticSites@2023-01-01' = {
+resource staticWebApp 'Microsoft.Web/staticSites@2024-11-01' = {
   name: staticWebAppName
   location: location
   sku: {

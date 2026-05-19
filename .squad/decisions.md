@@ -2,6 +2,77 @@
 
 ## Active Decisions
 
+### 2026-05-07: CI/CD Pipeline — OIDC GitHub Actions Workflows
+**Date:** 2026-05-07  
+**Author:** Poe (DevOps/Azure)  
+**Status:** Implemented
+
+#### Context
+The existing `.github/workflows/ci.yml` had placeholder deploy jobs that used the legacy `AZURE_CREDENTIALS` JSON blob secret. The task was to complete the CD pipeline with proper Azure OIDC authentication, correct dependency ordering, and a `docs/deploy.md` bootstrap guide.
+
+#### Decisions
+
+**1. Single workflow file (ci.yml) — not split**
+- Keep one `ci.yml` file covering CI (build + test) and CD (infra + deploy) rather than splitting into separate files.
+- Existing file had right skeleton; splitting would duplicate trigger logic. All jobs share same `on: push` trigger.
+- Trunk-based delivery means every merge to main is a candidate release — tight coupling of CI and CD reflects that intent.
+
+**2. OIDC federated credentials — no stored client secrets**
+- Replace `AZURE_CREDENTIALS` JSON blob with three separate secrets: `AZURE_CLIENT_ID`, `AZURE_TENANT_ID`, `AZURE_SUBSCRIPTION_ID`.
+- Login via `azure/login@v2` with OIDC.
+- No rotating secrets — federated credential tied to branch ref, not time-limited secret.
+- Follows Microsoft-recommended GitHub Actions → Azure auth pattern (post-2023).
+- `id-token: write` permission scoped only to jobs needing Azure access (`deploy-infra`, `deploy-api`).
+
+**3. `deploy-frontend` uses SWA token, not OIDC**
+- `deploy-frontend` uses `AZURE_STATIC_WEB_APPS_API_TOKEN` via `Azure/static-web-apps-deploy@v1`.
+- No OIDC login in that job — SWA deployment action uses SWA's own deployment API with per-resource token.
+
+**4. API artifact is zip-deployed**
+- `build-and-test-api` publishes, zips output, uploads as workflow artifact.
+- `deploy-api` downloads and passes zip to `azure/webapps-deploy@v3`.
+- SWA supports zip deploy natively and is faster than directory deploy.
+- Separating publish from deploy means artifact tested before deploy starts.
+- F1 free tier does not support deployment slots, so direct zip deploy is correct.
+
+**5. Frontend: SWA action builds from source (not pre-built artifact)**
+- `deploy-frontend` checks out repo and lets `Azure/static-web-apps-deploy@v1` build with `app_location: src/frontend` and `output_location: dist`.
+- SWA's Oryx build system handles Node version selection reliably.
+- Avoids complexity of `skip_app_build: true` with artifact download.
+- `build-and-test-frontend` acts as quality gate (tests must pass) before deploy.
+
+**6. `deploy-infra` depends on both build jobs**
+- `deploy-infra` has `needs: [build-and-test-api, build-and-test-frontend]`.
+- Enforces that infrastructure never updated unless both app builds are healthy.
+
+**7. Removed `detect-changes` job**
+- Removed job that conditionally skipped build jobs.
+- Detect-changes pattern caused dependency bug: if build job skipped (not failed), `deploy-infra` also skipped.
+- For two-component app (API + frontend), always running both build jobs is fast (~2 min each) and correct.
+- Simplicity > micro-optimization.
+
+**8. Resource group hardcoded as `hackathon-rg`**
+- `AZURE_RESOURCE_GROUP: hackathon-rg` is workflow-level env var.
+- Single environment (`dev`), no per-environment variable substitution.
+- If multi-environment needed later, promote to GitHub Environment.
+
+**First-Deploy Bootstrap (Chicken-and-Egg):**
+- `AZURE_STATIC_WEB_APPS_API_TOKEN` only available after SWA resource provisioned.
+- Bootstrap order: (1) Run `az deployment group create` manually for infra, (2) Retrieve SWA token with `az staticwebapp secrets list`, (3) Add token as GitHub secret, (4) Push to `main`.
+- Documented in `docs/deploy.md`.
+
+**Files Changed:** `.github/workflows/ci.yml` (OIDC, job structure, removed detect-changes), `docs/deploy.md` (bootstrap guide, secrets reference).
+
+---
+
+### 2026-05-07: Shared slice branch workflow — Kevin directive
+**By:** Obi-Wan (enforcing Kevin directive)
+**What:** All agents collaborate on a single shared branch per slice (e.g., slice/6-azure-infra). No per-agent branches for slice work. One PR to main per slice, opened when tests are green.
+**Branch naming:** slice/{N}-{slug}
+**Updated:** .squad/skills/trunk-based-delivery/SKILL.md
+
+---
+
 ### 2026-05-04: TDD Red phase complete — Slice 1
 **By:** Finn
 **What:** Wrote failing tests for health endpoint and home page. Tests compile but fail. Branch: finn/1-slice1-failing-tests. Kevin must approve via issue #2 before Han/Leia implement.
