@@ -85,6 +85,7 @@ jobs:
     outputs:
       webAppName: ${{ steps.deploy.outputs.webAppName }}
       staticWebAppName: ${{ steps.deploy.outputs.staticWebAppName }}
+      apiUrl: ${{ steps.deploy.outputs.apiUrl }}
     steps:
       - uses: actions/checkout@v4
 
@@ -149,4 +150,6 @@ jobs:
           action: upload
           app_location: src/frontend
           output_location: dist
+        env:
+          VITE_API_BASE_URL: ${{ needs.deploy-infra.outputs.apiUrl }}
 
