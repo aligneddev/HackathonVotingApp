@@ -110,6 +110,6 @@ inside the codespace, but the work account couldn't push to the repo, had to mak
 - [ ] Admin - edit presentation details
 - [ ] Admin - view votes and results, ranking (show vote counts, average ranking, order ascending by the average ranking, dialog for feedback people entered)
 - [ ] Add some voting animations and fun visuals
-- [ ] Deploy to Azure with the bicep files
+- [X] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests
 - [ ] Aspirify

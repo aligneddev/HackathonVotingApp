@@ -32,7 +32,7 @@ module appService './appservice.bicep' = {
     location: location
     environmentName: environmentName
     appName: appName
-    sqlConnectionString: sql.outputs.connectionString
+    sqlConnectionString: 'Server=tcp:${sql.outputs.serverFqdn},1433;Initial Catalog=${sql.outputs.databaseName};Persist Security Info=False;User ID=sqladmin;Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
     corsOrigin: 'https://${staticWebApp.outputs.staticWebAppDefaultHostName}'
   }
 }
