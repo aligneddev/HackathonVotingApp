@@ -7,8 +7,8 @@ on:
     branches: [ main ]
 
 env:
-  AZURE_RESOURCE_GROUP: hackathon-rg
-  AZURE_APP_NAME: hackathon-voting
+  AZURE_RESOURCE_GROUP: kl-hackathon-rg
+  AZURE_APP_NAME: kl-hackathon-voting
   AZURE_ENVIRONMENT: dev
 
 jobs:

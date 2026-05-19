@@ -2,7 +2,7 @@ targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
 param environmentName string = 'dev'
-param appName string = 'hackathon-voting'
+param appName string = 'kl-hackathon-voting'
 
 @secure()
 param sqlAdminPassword string
