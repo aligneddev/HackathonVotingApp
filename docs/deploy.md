@@ -25,7 +25,7 @@ The client (application) ID of the Azure AD app registration used for OIDC authe
 
 ```bash
 # After creating the app registration (see setup below):
-az ad app list --display-name "hackathon-voting-gh-actions" --query "[0].appId" -o tsv
+az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
 ```
 
 ### `AZURE_TENANT_ID`
@@ -54,8 +54,8 @@ The deployment token for Azure Static Web Apps. Only obtainable **after** the fi
 
 ```bash
 az staticwebapp secrets list \
-  --name "hackathon-voting-dev-swa" \
-  --resource-group "hackathon-rg" \
+  --name "kl-hackathon-voting-dev-swa" \
+  --resource-group "kl-hackathon-rg" \
   --query "properties.apiKey" -o tsv
 ```
 
@@ -69,21 +69,28 @@ Run these commands once before the first deployment. Requires Azure CLI (`az log
 
 ```bash
 az group create \
-  --name hackathon-rg \
-  --location eastus
+  --name kl-hackathon-rg \
+  --location centralus
 ```
 
 ### 2. Create the App Registration (Service Principal for GitHub Actions)
 
+**PowerShell (Windows):**
+```powershell
+az ad app create --display-name "kl-hackathon-voting-gh-actions"
+
+$APP_ID = az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
+Write-Host "AZURE_CLIENT_ID: $APP_ID"
+
+$SP_OBJECT_ID = az ad sp create --id $APP_ID --query id -o tsv
+Write-Host "SP Object ID: $SP_OBJECT_ID"
+```
+
+**Bash / macOS / Linux:**
 ```bash
-# Create the app registration
-az ad app create --display-name "hackathon-voting-gh-actions"
-
-# Note the appId from the output (this is your AZURE_CLIENT_ID)
-APP_ID=$(az ad app list --display-name "hackathon-voting-gh-actions" --query "[0].appId" -o tsv)
+az ad app create --display-name "kl-hackathon-voting-gh-actions"
+APP_ID=$(az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv)
 echo "AZURE_CLIENT_ID: $APP_ID"
-
-# Create the service principal
 SP_OBJECT_ID=$(az ad sp create --id $APP_ID --query id -o tsv)
 echo "SP Object ID: $SP_OBJECT_ID"
 ```
@@ -92,18 +99,45 @@ echo "SP Object ID: $SP_OBJECT_ID"
 
 Grant the service principal Contributor access on the resource group (least privilege for deployment).
 
+**PowerShell (Windows):**
+```powershell
+$SUBSCRIPTION_ID = az account show --query id -o tsv
+
+az role assignment create `
+  --assignee $SP_OBJECT_ID `
+  --role Contributor `
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/kl-hackathon-rg"
+```
+
+**Bash / macOS / Linux:**
 ```bash
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
 
 az role assignment create \
   --assignee $SP_OBJECT_ID \
   --role Contributor \
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/hackathon-rg"
+  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/kl-hackathon-rg"
 ```
 
 ### 4. Create the Federated Credential (OIDC)
 
 This allows GitHub Actions to authenticate with Azure without storing a client secret.
+
+**PowerShell (Windows):**
+
+```powershell
+$credJson = @{
+  name        = "github-main-branch"
+  issuer      = "https://token.actions.githubusercontent.com"
+  subject     = "repo:aligneddev/HackathonVotingApp:ref:refs/heads/main"
+  audiences   = @("api://AzureADTokenExchange")
+  description = "GitHub Actions OIDC for main branch deployments"
+} | ConvertTo-Json -Compress
+
+az ad app federated-credential create --id $APP_ID --parameters $credJson
+```
+
+**Bash / macOS / Linux:**
 
 ```bash
 az ad app federated-credential create \
@@ -118,15 +152,30 @@ az ad app federated-credential create \
 ```
 
 > **Note:** The `subject` must exactly match the repository and branch. If you fork this repo, update `aligneddev/HackathonVotingApp` to your `{owner}/{repo}`.
+>
+> **Tip:** If `$APP_ID` is not set (e.g., new terminal session), retrieve it first:
+> ```powershell
+> $APP_ID = az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
+> ```
 
 ### 5. Add GitHub Secrets
 
 Now add the three OIDC secrets to the repository:
 
+**PowerShell (Windows):**
+```powershell
+$TENANT_ID = az account show --query tenantId -o tsv
+
+gh secret set AZURE_CLIENT_ID --body $APP_ID
+gh secret set AZURE_TENANT_ID --body $TENANT_ID
+gh secret set AZURE_SUBSCRIPTION_ID --body $SUBSCRIPTION_ID
+gh secret set SQL_ADMIN_PASSWORD --body "<your-strong-password>"
+```
+
+**Bash / macOS / Linux:**
 ```bash
 TENANT_ID=$(az account show --query tenantId -o tsv)
 
-# Use gh CLI or GitHub UI to set secrets:
 gh secret set AZURE_CLIENT_ID --body "$APP_ID"
 gh secret set AZURE_TENANT_ID --body "$TENANT_ID"
 gh secret set AZURE_SUBSCRIPTION_ID --body "$SUBSCRIPTION_ID"
@@ -145,11 +194,11 @@ Run the Bicep deployment before the first GitHub Actions run to get the SWA toke
 
 ```bash
 az deployment group create \
-  --resource-group hackathon-rg \
+  --resource-group kl-hackathon-rg \
   --template-file infra/main.bicep \
   --parameters \
       environmentName=dev \
-      appName=hackathon-voting \
+      appName=kl-hackathon-voting \
       sqlAdminPassword="<your-sql-admin-password>"
 ```
 
@@ -157,8 +206,8 @@ az deployment group create \
 
 ```bash
 SWA_TOKEN=$(az staticwebapp secrets list \
-  --name "hackathon-voting-dev-swa" \
-  --resource-group "hackathon-rg" \
+  --name "kl-hackathon-voting-dev-swa" \
+  --resource-group "kl-hackathon-rg" \
   --query "properties.apiKey" -o tsv)
 
 gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$SWA_TOKEN"
