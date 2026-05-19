@@ -61,8 +61,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var client = CreateClientWithFreshDb(out _);
         var presentationId = await SeedPresentationAsync(client);
 
-        // Act — route POST /votes/{presentationId} does not exist yet; will return 404 from missing route
-        var response = await client.PostAsync($"/votes/{presentationId}", null);
+        // Act
+        var response = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
 
         // Assert — expects 201 once implemented
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -75,8 +75,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var client = CreateClientWithFreshDb(out _);
         var nonExistentId = Guid.NewGuid();
 
-        // Act — route does not exist yet
-        var response = await client.PostAsync($"/votes/{nonExistentId}", null);
+        // Act
+        var response = await client.PostAsJsonAsync($"/votes/{nonExistentId}", new { ranking = 1, notes = (string?)null });
 
         // Assert — expects 404 (presentation not found) once implemented
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -92,8 +92,9 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Send request with the dedup cookie already set (simulates a browser that already voted)
         var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"/votes/{presentationId}");
         requestMsg.Headers.Add("Cookie", $"hackathon-voted-{presentationId}=true");
+        requestMsg.Content = JsonContent.Create(new { ranking = 1, notes = (string?)null });
 
-        // Act — route does not exist yet
+        // Act
         var response = await client.SendAsync(requestMsg);
 
         // Assert — expects 409 once implemented
@@ -139,7 +140,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act — cast one vote, then check count
-        await client.PostAsync($"/votes/{presentationId}", null);
+        await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
         var countResponse = await client.GetAsync($"/votes/{presentationId}/count");
 
         // Assert — expects count to be 1 after one successful vote

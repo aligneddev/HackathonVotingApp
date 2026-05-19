@@ -16,7 +16,14 @@ public class VotingService(AppDbContext db) : IVotingService
         if (alreadyVoted)
             return false;
 
-        db.Votes.Add(new Vote { PresentationId = presentationId, Ranking = ranking, Notes = notes });
+        db.Votes.Add(
+            new Vote
+            {
+                PresentationId = presentationId,
+                Ranking = ranking,
+                Notes = notes,
+            }
+        );
         await db.SaveChangesAsync();
         return true;
     }
