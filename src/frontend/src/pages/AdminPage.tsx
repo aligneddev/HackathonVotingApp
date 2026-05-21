@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { presentationApi, Presentation } from '../api/presentationApi';
 
 export default function AdminPage() {
@@ -40,14 +41,22 @@ export default function AdminPage() {
   return (
     <main className="min-h-screen bg-gray-950 text-gray-100">
       <div className="max-w-3xl mx-auto p-4 md:p-8">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6 gap-3">
           <h1 className="text-2xl font-bold text-indigo-400">Presentations</h1>
-          <button
-            onClick={() => setShowForm(s => !s)}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            Add Presentation
-          </button>
+          <div className="flex items-center gap-2">
+            <Link
+              to="/admin/results"
+              className="bg-gray-800 border border-gray-600 hover:border-indigo-500 text-gray-100 px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              View Vote Results
+            </Link>
+            <button
+              onClick={() => setShowForm(s => !s)}
+              className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              Add Presentation
+            </button>
+          </div>
         </div>
 
         {showForm && (

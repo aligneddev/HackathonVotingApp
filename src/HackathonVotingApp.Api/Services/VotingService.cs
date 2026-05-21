@@ -30,4 +30,52 @@ public class VotingService(AppDbContext db) : IVotingService
 
     public async Task<int> GetVoteCountAsync(Guid presentationId) =>
         await db.Votes.CountAsync(v => v.PresentationId == presentationId);
+
+    public async Task<IReadOnlyList<AdminVoteResultResponse>> GetAdminResultsAsync()
+    {
+        var summaries = await db
+            .Presentations.Select(p => new
+            {
+                p.Id,
+                p.Title,
+                p.PresenterName,
+                VoteCount = db.Votes.Count(v => v.PresentationId == p.Id),
+                AverageRanking = db
+                    .Votes.Where(v => v.PresentationId == p.Id)
+                    .Select(v => (double?)v.Ranking)
+                    .Average(),
+            })
+            .OrderBy(p => p.AverageRanking == null)
+            .ThenBy(p => p.AverageRanking)
+            .ThenByDescending(p => p.VoteCount)
+            .ThenBy(p => p.Title)
+            .ToListAsync();
+
+        var notes = await db
+            .Votes.Where(v => v.Notes != null && v.Notes != "")
+            .OrderByDescending(v => v.CreatedAt)
+            .Select(v => new
+            {
+                v.PresentationId,
+                Note = new VoteNoteResponse(v.Notes!, v.Ranking, v.CreatedAt),
+            })
+            .ToListAsync();
+
+        var notesByPresentation = notes
+            .GroupBy(v => v.PresentationId)
+            .ToDictionary(g => g.Key, g => (IReadOnlyList<VoteNoteResponse>)g.Select(v => v.Note).ToList());
+
+        return summaries
+            .Select(s =>
+                new AdminVoteResultResponse(
+                    s.Id,
+                    s.Title,
+                    s.PresenterName,
+                    s.VoteCount,
+                    s.AverageRanking,
+                    notesByPresentation.GetValueOrDefault(s.Id, Array.Empty<VoteNoteResponse>())
+                )
+            )
+            .ToList();
+    }
 }

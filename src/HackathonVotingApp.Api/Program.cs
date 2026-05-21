@@ -145,6 +145,11 @@ votes.MapGet(
 app.MapGet("/leaderboard", async (ILeaderboardService svc) =>
     Results.Ok(await svc.GetLeaderboardAsync()));
 
+var admin = app.MapGroup("/admin");
+
+admin.MapGet("/results", async (IVotingService votingService) =>
+    Results.Ok(await votingService.GetAdminResultsAsync()));
+
 app.Run();
 
 public partial class Program { }

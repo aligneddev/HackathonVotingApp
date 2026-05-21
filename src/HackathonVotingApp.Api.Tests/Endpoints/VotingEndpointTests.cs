@@ -54,6 +54,17 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         return created!.Id;
     }
 
+    private static async Task SeedVotesAsync(string dbName, params Vote[] votes)
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+
+        await using var db = new AppDbContext(options);
+        db.Votes.AddRange(votes);
+        await db.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task CastVote_WithValidPresentationId_Returns201Created()
     {
@@ -149,6 +160,79 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         body!.Count.Should().Be(1);
     }
 
+    [Fact]
+    public async Task GetAdminResults_ReturnsEntriesRankedByAverageAscending()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out var dbName);
+        var firstPresentationId = await SeedPresentationAsync(client);
+        var secondPresentationId = await SeedPresentationAsync(client);
+
+        await SeedVotesAsync(
+            dbName,
+            new Vote { PresentationId = firstPresentationId, Ranking = 1, Notes = "Great architecture" },
+            new Vote { PresentationId = firstPresentationId, Ranking = 2, Notes = "Solid delivery" },
+            new Vote { PresentationId = secondPresentationId, Ranking = 4, Notes = "Needs polish" }
+        );
+
+        // Act
+        var response = await client.GetAsync("/admin/results");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<List<AdminResultResponse>>();
+        body.Should().NotBeNull();
+        body!.Should().HaveCount(2);
+
+        body[0].Id.Should().Be(firstPresentationId);
+        body[0].VoteCount.Should().Be(2);
+        body[0].AverageRanking.Should().Be(1.5);
+
+        body[1].Id.Should().Be(secondPresentationId);
+        body[1].VoteCount.Should().Be(1);
+        body[1].AverageRanking.Should().Be(4.0);
+    }
+
+    [Fact]
+    public async Task GetAdminResults_IncludesVoteNotes()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out var dbName);
+        var presentationId = await SeedPresentationAsync(client);
+
+        await SeedVotesAsync(
+            dbName,
+            new Vote
+            {
+                PresentationId = presentationId,
+                Ranking = 1,
+                Notes = "Loved the clarity",
+                CreatedAt = DateTimeOffset.UtcNow.AddMinutes(-2),
+            },
+            new Vote
+            {
+                PresentationId = presentationId,
+                Ranking = 2,
+                Notes = "Great demo flow",
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
+
+        // Act
+        var response = await client.GetAsync("/admin/results");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<List<AdminResultResponse>>();
+        body.Should().NotBeNull();
+        body!.Should().ContainSingle();
+
+        var result = body[0];
+        result.Notes.Should().HaveCount(2);
+        result.Notes[0].Notes.Should().Be("Great demo flow");
+        result.Notes[1].Notes.Should().Be("Loved the clarity");
+    }
+
     // Local DTOs for deserialization
     private record PresentationResponseDto(
         Guid Id,
@@ -159,4 +243,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     );
 
     private record VoteCountResponse(int Count);
+
+    private record AdminResultResponse(
+        Guid Id,
+        string Title,
+        string PresenterName,
+        int VoteCount,
+        double? AverageRanking,
+        List<AdminVoteNoteResponse> Notes
+    );
+
+    private record AdminVoteNoteResponse(string Notes, int Ranking, DateTimeOffset CreatedAt);
 }
