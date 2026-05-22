@@ -27,12 +27,6 @@ function PublicLayout() {
           <NavLink to="/leaderboard" className={linkClassName}>
             Leaderboard
           </NavLink>
-          <NavLink to="/results" className={linkClassName}>
-            Results
-          </NavLink>
-          <NavLink to="/admin" className={linkClassName}>
-            Admin
-          </NavLink>
         </div>
       </nav>
       <Outlet />
