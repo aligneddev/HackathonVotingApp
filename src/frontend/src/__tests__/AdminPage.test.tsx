@@ -40,16 +40,18 @@ describe('AdminPage', () => {
     mockVotingApi.getVotingState.mockResolvedValue({ isOpen: true, updatedAt: new Date().toISOString() });
   });
 
-  it('renders_presentations_heading', () => {
+  it('renders_presentations_heading', async () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByText(/no presentations yet/i);
     const heading = screen.getByRole('heading', { name: /presentations/i });
     expect(heading).toBeInTheDocument();
   });
 
-  it('renders_add_presentation_button', () => {
+  it('renders_add_presentation_button', async () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
     render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    await screen.findByText(/no presentations yet/i);
     const button = screen.getByRole('button', { name: /add presentation/i });
     expect(button).toBeInTheDocument();
   });

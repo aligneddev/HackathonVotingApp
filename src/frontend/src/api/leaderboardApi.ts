@@ -3,6 +3,8 @@ export interface LeaderboardEntry {
   title: string;
   presenterName: string;
   voteCount: number;
+  totalPoints: number;
+  averagePoints: number | null;
 }
 
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';

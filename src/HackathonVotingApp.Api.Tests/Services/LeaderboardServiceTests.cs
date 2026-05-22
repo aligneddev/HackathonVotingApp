@@ -111,4 +111,57 @@ public class LeaderboardServiceTests
         // Assert
         result[0].VoteCount.Should().Be(3);
     }
+
+    [Fact]
+    public async Task GetLeaderboard_RanksByWeightedPoints_NotRawVoteCount()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var p1 = new Presentation { Title = "Top Ranked Once", PresenterName = "Speaker A" };
+        var p2 = new Presentation { Title = "Middle Ranked Twice", PresenterName = "Speaker B" };
+        db.Presentations.AddRange(p1, p2);
+        db.Votes.AddRange(
+            new Vote { PresentationId = p1.Id, Ranking = 1 }, // 8 points
+            new Vote { PresentationId = p2.Id, Ranking = 3 }, // 3 points
+            new Vote { PresentationId = p2.Id, Ranking = 3 } // 3 points => 6 total
+        );
+        await db.SaveChangesAsync();
+        var svc = new LeaderboardService(db);
+
+        // Act
+        var result = (await svc.GetLeaderboardAsync()).ToList();
+
+        // Assert
+        result[0].Id.Should().Be(p1.Id);
+        result[1].Id.Should().Be(p2.Id);
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_WhenTotalPointsTie_UsesFirstPlaceCountTieBreak()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var p1 = new Presentation { Title = "One First + One Fifth", PresenterName = "Speaker A" };
+        var p2 = new Presentation { Title = "Two Seconds", PresenterName = "Speaker B" };
+        db.Presentations.AddRange(p1, p2);
+        db.Votes.AddRange(
+            new Vote { PresentationId = p1.Id, Ranking = 1 }, // 8 points
+            new Vote { PresentationId = p1.Id, Ranking = 4 }, // 2 points => 10 total, one first-place
+            new Vote { PresentationId = p2.Id, Ranking = 2 }, // 5 points
+            new Vote { PresentationId = p2.Id, Ranking = 2 } // 5 points => 10 total
+        );
+        await db.SaveChangesAsync();
+        var svc = new LeaderboardService(db);
+
+        // Act
+        var result = (await svc.GetLeaderboardAsync()).ToList();
+
+        // Assert
+        // Expected behavior after implementation:
+        // - Weighted points determine ranking first.
+        // - If points tie, presentation with more first-place rankings wins.
+        // Current implementation sorts by vote count only, so this should fail in red phase.
+        result[0].Id.Should().Be(p1.Id);
+        result[1].Id.Should().Be(p2.Id);
+    }
 }

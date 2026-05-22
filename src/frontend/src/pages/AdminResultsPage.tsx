@@ -34,7 +34,7 @@ export default function AdminResultsPage() {
         <div className="mb-6">
           <h1 className="text-2xl font-bold text-indigo-400">Admin Vote Results</h1>
           <p className="text-sm text-gray-400 mt-2">
-            Ranked by average ranking ascending. Lower average means better result.
+            Ranked by total weighted points with deterministic tie-breakers.
           </p>
         </div>
 
@@ -77,12 +77,16 @@ export default function AdminResultsPage() {
 
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="bg-gray-800/70 rounded-lg p-3">
+                    <p className="text-xs uppercase text-gray-500">Total Points</p>
+                    <p className="text-xl font-bold text-indigo-300 mt-1">{entry.totalPoints}</p>
+                  </div>
+                  <div className="bg-gray-800/70 rounded-lg p-3">
                     <p className="text-xs uppercase text-gray-500">Vote Count</p>
                     <p className="text-xl font-bold text-gray-100 mt-1">{entry.voteCount}</p>
                   </div>
                   <div className="bg-gray-800/70 rounded-lg p-3">
-                    <p className="text-xs uppercase text-gray-500">Average Ranking</p>
-                    <p className="text-xl font-bold text-gray-100 mt-1">{formatAverage(entry.averageRanking)}</p>
+                    <p className="text-xs uppercase text-gray-500">Average Points</p>
+                    <p className="text-xl font-bold text-gray-100 mt-1">{formatAverage(entry.averagePoints)}</p>
                   </div>
                 </div>
               </section>

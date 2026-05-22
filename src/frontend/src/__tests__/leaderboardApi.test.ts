@@ -25,12 +25,16 @@ describe("leaderboardApi", () => {
         title: "Top Talk",
         presenterName: "Luke Skywalker",
         voteCount: 5,
+        totalPoints: 22,
+        averagePoints: 4.4,
       },
       {
         id: "id-2",
         title: "Second Talk",
         presenterName: "Leia Organa",
         voteCount: 3,
+        totalPoints: 14,
+        averagePoints: 2.8,
       },
     ];
     vi.stubGlobal(

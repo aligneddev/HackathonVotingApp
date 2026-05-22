@@ -116,3 +116,51 @@ had to make several fixes, including api route, EF Migrations
 - [ ] Switch to Managed Identity for ressources
 - [X] Tie login to a sudo user in the database or at least  - name, don't game the system
 - [ ] Admin menu
+- [ ] Determine a winner (after /grill-me)
+
+
+
+## Determine a winner (after /grill-me)
+    Finalized rules (2026-05-22):
+    - Each voter submits one immutable ballot.
+    - Ballot is atomic (single submit request), not per-presentation submission.
+    - Voter ranks top 5 only when 5+ presentations exist.
+    - If fewer than 5 presentations exist, voter must rank all available presentations.
+    - Ballot must be complete for the current event (no partial submissions).
+    - Scoring map:
+      1st = 8 points
+      2nd = 5 points
+      3rd = 3 points
+      4th = 2 points
+      5th = 1 point
+    - Winner is presentation with highest TotalPoints.
+    - Average points is tracked for analytics and display.
+    - Tie-break chain for equal TotalPoints:
+      1) More 1st-place rankings
+      2) More 2nd-place rankings
+      3) Higher ballot count
+      4) Earlier time reaching final total
+      5) PresentationId ascending (stable fallback)
+    - One-ballot-per-voter dual guard:
+      - Server-side uniqueness on normalized voter name in active session
+      - Client-side localStorage session marker for UX
+    - Voter names are admin-only (not public).
+    - Public standings show full ranking list with top 3 highlighted.
+    - Live standings are provisional while voting is open; final winners lock when admin closes voting.
+    - Start fresh for this feature (no legacy submitted ballots to migrate).
+
+    Implementation checklist:
+    - [ ] Add a ballot submission contract (`POST /api/votes/ballots`) with voter name and ranked entries.
+    - [ ] Validate completeness/uniqueness/rank range based on current presentation count.
+    - [ ] Add session-scoped one-ballot uniqueness by normalized voter name.
+    - [ ] Refactor vote persistence to save ballot entries atomically in one transaction.
+    - [ ] Replace winner computation from vote count to weighted TotalPoints.
+    - [ ] Implement tie-break ordering in backend results and leaderboard queries.
+    - [ ] Keep per-presentation notes on ranked entries and expose admin-only voter identity.
+    - [ ] Update frontend voting page to enforce complete ballot and single atomic submit.
+    - [ ] Update results/leaderboard UI to show full ranking with top 3 highlight.
+    - [ ] Add backend unit/integration tests for validation, scoring, ties, and immutability.
+    - [ ] Add frontend tests for ballot validation, submit flow, and results rendering.
+    - [ ] Run full verification (`dotnet test`, frontend tests, formatting).
+
+

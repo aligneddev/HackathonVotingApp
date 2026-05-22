@@ -19,14 +19,25 @@ const mockLeaderboard = [
     title: "Best Demo",
     presenterName: "Luke Skywalker",
     voteCount: 10,
+    totalPoints: 42,
+    averagePoints: 8.4,
   },
   {
     id: "id-2",
     title: "Second Demo",
     presenterName: "Leia Organa",
     voteCount: 7,
+    totalPoints: 30,
+    averagePoints: 6,
   },
-  { id: "id-3", title: "Third Demo", presenterName: "Han Solo", voteCount: 3 },
+  {
+    id: "id-3",
+    title: "Third Demo",
+    presenterName: "Han Solo",
+    voteCount: 3,
+    totalPoints: 18,
+    averagePoints: 3.6,
+  },
 ];
 
 describe("LeaderboardPage", () => {
@@ -67,15 +78,15 @@ describe("LeaderboardPage", () => {
     });
   });
 
-  it("shows_vote_counts", async () => {
+  it("shows_total_points", async () => {
     mockApi.getLeaderboard.mockResolvedValue(mockLeaderboard);
 
     render(<LeaderboardPage />);
 
     await waitFor(() => {
-      expect(screen.getByText("10")).toBeInTheDocument();
-      expect(screen.getByText("7")).toBeInTheDocument();
-      expect(screen.getByText("3")).toBeInTheDocument();
+      expect(screen.getByText("42")).toBeInTheDocument();
+      expect(screen.getByText("30")).toBeInTheDocument();
+      expect(screen.getByText("18")).toBeInTheDocument();
     });
   });
 });

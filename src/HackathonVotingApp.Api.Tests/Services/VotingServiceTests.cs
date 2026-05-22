@@ -149,4 +149,29 @@ public class VotingServiceTests
         // Assert
         result.Should().BeFalse();
     }
+
+    [Fact]
+    public async Task GetAdminResultsAsync_RanksByWeightedPoints_NotAverageRanking()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var p1 = new Presentation { Title = "Single First Place", PresenterName = "Speaker A" };
+        var p2 = new Presentation { Title = "Two Second Places", PresenterName = "Speaker B" };
+        db.Presentations.AddRange(p1, p2);
+        db.Votes.AddRange(
+            new Vote { PresentationId = p1.Id, VoterName = "A", Ranking = 1 }, // 8 points
+            new Vote { PresentationId = p2.Id, VoterName = "B", Ranking = 2 }, // 5 points
+            new Vote { PresentationId = p2.Id, VoterName = "C", Ranking = 2 } // 5 points => 10 total
+        );
+        await db.SaveChangesAsync();
+        var svc = new VotingService(db);
+
+        // Act
+        var results = await svc.GetAdminResultsAsync();
+
+        // Assert
+        results.Should().HaveCount(2);
+        results[0].Id.Should().Be(p2.Id);
+        results[1].Id.Should().Be(p1.Id);
+    }
 }

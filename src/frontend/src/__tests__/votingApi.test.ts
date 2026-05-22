@@ -34,4 +34,21 @@ describe('votingApi', () => {
     );
     expect(count).toBe(5);
   });
+
+  it('castBallot_calls_POST_votes_ballots', async () => {
+    const mockFetch = vi.fn().mockResolvedValueOnce(
+      new Response(null, { status: 201 })
+    );
+    vi.stubGlobal('fetch', mockFetch);
+
+    await votingApi.castBallot('Ada Lovelace', [
+      { presentationId: 'p-1', ranking: 1 },
+      { presentationId: 'p-2', ranking: 2 },
+    ]);
+
+    expect(mockFetch).toHaveBeenCalledWith(
+      '/api/votes/ballots',
+      expect.objectContaining({ method: 'POST' })
+    );
+  });
 });

@@ -11,6 +11,10 @@ export interface AdminResultEntry {
   title: string;
   presenterName: string;
   voteCount: number;
+  totalPoints: number;
+  averagePoints: number | null;
+  firstPlaceCount: number;
+  secondPlaceCount: number;
   averageRanking: number | null;
   notes: VoteNote[];
 }

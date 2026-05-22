@@ -18,6 +18,8 @@ export default function VotingPage() {
   const [isVotingOpen, setIsVotingOpen] = useState(true);
   const [voterName, setVoterName] = useState('');
 
+  const requiredRankCount = Math.min(5, rankedItems.length);
+
   useEffect(() => {
     Promise.all([presentationApi.getPresentations(), adminVotingApi.getVotingState()])
       .then(([data, state]) => {
@@ -47,10 +49,13 @@ export default function VotingPage() {
     setError(null);
 
     try {
-      for (let i = 0; i < rankedItems.length; i++) {
-        const item = rankedItems[i];
-        await votingApi.castVote(item.presentation.id, voterName.trim(), i + 1, item.notes || undefined);
-      }
+      const entries = rankedItems.slice(0, requiredRankCount).map((item, index) => ({
+        presentationId: item.presentation.id,
+        ranking: index + 1,
+        notes: item.notes || undefined,
+      }));
+
+      await votingApi.castBallot(voterName.trim(), entries);
       localStorage.setItem(getSessionKey(rankedItems.map(r => r.presentation)), 'true');
       setSubmitted(true);
     } catch (err) {
@@ -93,7 +98,11 @@ export default function VotingPage() {
           )}
         </div>
         <p className="text-gray-400 text-sm mb-6">
-          Drag or use the arrows to rank from best (1) to last. Add optional notes for each.
+          Drag or use the arrows to rank in order of preference.
+          {rankedItems.length > 5
+            ? ' Your top 5 are submitted when you vote.'
+            : ' You must rank all available presentations.'}
+          {' '}Add optional notes for each.
         </p>
         <p className="text-amber-300 text-sm mb-4">
           Please use your real name and only vote once.

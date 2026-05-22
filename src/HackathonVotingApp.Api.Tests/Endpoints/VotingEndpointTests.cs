@@ -54,6 +54,25 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         return created!.Id;
     }
 
+    private async Task<List<Guid>> SeedPresentationsAsync(HttpClient client, int count)
+    {
+        var ids = new List<Guid>();
+        for (var i = 0; i < count; i++)
+        {
+            var request = new
+            {
+                title = $"Voting Test Presentation {i + 1}",
+                presenterName = $"Test Speaker {i + 1}",
+                description = "Used for ballot tests",
+            };
+            var response = await client.PostAsJsonAsync("/api/presentations", request);
+            var created = await response.Content.ReadFromJsonAsync<PresentationResponseDto>();
+            ids.Add(created!.Id);
+        }
+
+        return ids;
+    }
+
     private static async Task SeedVotesAsync(string dbName, params Vote[] votes)
     {
         var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -110,6 +129,153 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Assert — expects 409 once implemented
         response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task SubmitBallot_WithCompleteTopFiveEntries_Returns201Created()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationIds = await SeedPresentationsAsync(client, 5);
+
+        var payload = new
+        {
+            voterName = "Alice",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[0], ranking = 1, notes = "Great idea" },
+                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
+                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
+                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+            },
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/votes/ballots", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
+    [Fact]
+    public async Task SubmitBallot_WithMissingRankEntry_Returns400BadRequest()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationIds = await SeedPresentationsAsync(client, 5);
+
+        var payload = new
+        {
+            voterName = "Alice",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
+                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
+                new { presentationId = presentationIds[3], ranking = 5, notes = (string?)null },
+            },
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/votes/ballots", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
+    }
+
+    [Fact]
+    public async Task SubmitBallot_WhenVoterSubmitsAgain_Returns409Conflict()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationIds = await SeedPresentationsAsync(client, 5);
+
+        var firstPayload = new
+        {
+            voterName = "Alice",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
+                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
+                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
+                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+            },
+        };
+
+        var secondPayload = new
+        {
+            voterName = " alice ",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[4], ranking = 1, notes = (string?)null },
+                new { presentationId = presentationIds[3], ranking = 2, notes = (string?)null },
+                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
+                new { presentationId = presentationIds[1], ranking = 4, notes = (string?)null },
+                new { presentationId = presentationIds[0], ranking = 5, notes = (string?)null },
+            },
+        };
+
+        await client.PostAsJsonAsync("/api/votes/ballots", firstPayload);
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/votes/ballots", secondPayload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
+    }
+
+    [Fact]
+    public async Task SubmitBallot_WhenVotingClosed_Returns403Forbidden()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationIds = await SeedPresentationsAsync(client, 5);
+        await client.PostAsync("/api/admin/voting/end", null);
+
+        var payload = new
+        {
+            voterName = "Alice",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
+                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
+                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
+                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+            },
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/votes/ballots", payload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task SubmitBallot_WhenFewerThanFivePresentations_RequiresAllAvailable()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationIds = await SeedPresentationsAsync(client, 3);
+
+        var incompletePayload = new
+        {
+            voterName = "Alice",
+            entries = new[]
+            {
+                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
+                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+            },
+        };
+
+        // Act
+        var response = await client.PostAsJsonAsync("/api/votes/ballots", incompletePayload);
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
     }
 
     [Fact]

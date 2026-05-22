@@ -26,6 +26,10 @@ describe('AdminResultsPage', () => {
         title: 'API Architecture',
         presenterName: 'Leia',
         voteCount: 3,
+        totalPoints: 16,
+        averagePoints: 5.33,
+        firstPlaceCount: 1,
+        secondPlaceCount: 1,
         averageRanking: 1.67,
         notes: [{ notes: 'Great story', ranking: 1, createdAt: new Date().toISOString() }],
       },
@@ -36,7 +40,8 @@ describe('AdminResultsPage', () => {
     await waitFor(() => {
       expect(screen.getByText('API Architecture')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
-      expect(screen.getByText('1.67')).toBeInTheDocument();
+      expect(screen.getByText('16')).toBeInTheDocument();
+      expect(screen.getByText('5.33')).toBeInTheDocument();
     });
   });
 
@@ -49,6 +54,10 @@ describe('AdminResultsPage', () => {
         title: 'Frontend Craftsmanship',
         presenterName: 'Padme',
         voteCount: 2,
+        totalPoints: 13,
+        averagePoints: 6.5,
+        firstPlaceCount: 1,
+        secondPlaceCount: 1,
         averageRanking: 2,
         notes: [
           { notes: 'Loved the transitions', ranking: 1, createdAt: new Date().toISOString() },

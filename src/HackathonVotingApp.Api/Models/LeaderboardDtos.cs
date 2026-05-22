@@ -1,3 +1,10 @@
 namespace HackathonVotingApp.Api.Models;
 
-public record LeaderboardEntryResponse(Guid Id, string Title, string PresenterName, int VoteCount);
+public record LeaderboardEntryResponse(
+    Guid Id,
+    string Title,
+    string PresenterName,
+    int VoteCount,
+    int TotalPoints,
+    double? AveragePoints
+);

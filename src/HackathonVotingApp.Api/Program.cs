@@ -114,6 +114,27 @@ presentations.MapDelete(
 var votes = app.MapGroup("/api/votes");
 
 votes.MapPost(
+    "/ballots",
+    async (HackathonVotingApp.Api.Models.SubmitBallotRequest request, IVotingService votingService) =>
+    {
+        var result = await votingService.SubmitBallotAsync(request);
+        if (result.Success)
+            return Results.Created("/api/votes/ballots", null);
+
+        return result.Error switch
+        {
+            HackathonVotingApp.Api.Models.SubmitBallotError.VotingClosed => Results.StatusCode(
+                StatusCodes.Status403Forbidden
+            ),
+            HackathonVotingApp.Api.Models.SubmitBallotError.DuplicateBallot => Results.Conflict(),
+            HackathonVotingApp.Api.Models.SubmitBallotError.InvalidVoter
+            or HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot => Results.BadRequest(),
+            _ => Results.BadRequest(),
+        };
+    }
+);
+
+votes.MapPost(
     "/{presentationId:guid}",
     async (
         Guid presentationId,
