@@ -15,7 +15,8 @@ namespace HackathonVotingApp.Api.Data.Migrations
                 table: "VotingStates",
                 type: "int",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 0
+            );
 
             migrationBuilder.AddColumn<string>(
                 name: "NormalizedVoterName",
@@ -23,24 +24,28 @@ namespace HackathonVotingApp.Api.Data.Migrations
                 type: "nvarchar(120)",
                 maxLength: 120,
                 nullable: false,
-                defaultValue: "");
+                defaultValue: ""
+            );
 
             migrationBuilder.AddColumn<int>(
                 name: "SessionId",
                 table: "Votes",
                 type: "int",
                 nullable: false,
-                defaultValue: 0);
+                defaultValue: 0
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votes_SessionId_NormalizedVoterName",
                 table: "Votes",
-                columns: new[] { "SessionId", "NormalizedVoterName" });
+                columns: new[] { "SessionId", "NormalizedVoterName" }
+            );
 
             migrationBuilder.CreateIndex(
                 name: "IX_Votes_SessionId_PresentationId",
                 table: "Votes",
-                columns: new[] { "SessionId", "PresentationId" });
+                columns: new[] { "SessionId", "PresentationId" }
+            );
         }
 
         /// <inheritdoc />
@@ -48,23 +53,16 @@ namespace HackathonVotingApp.Api.Data.Migrations
         {
             migrationBuilder.DropIndex(
                 name: "IX_Votes_SessionId_NormalizedVoterName",
-                table: "Votes");
+                table: "Votes"
+            );
 
-            migrationBuilder.DropIndex(
-                name: "IX_Votes_SessionId_PresentationId",
-                table: "Votes");
+            migrationBuilder.DropIndex(name: "IX_Votes_SessionId_PresentationId", table: "Votes");
 
-            migrationBuilder.DropColumn(
-                name: "CurrentSessionId",
-                table: "VotingStates");
+            migrationBuilder.DropColumn(name: "CurrentSessionId", table: "VotingStates");
 
-            migrationBuilder.DropColumn(
-                name: "NormalizedVoterName",
-                table: "Votes");
+            migrationBuilder.DropColumn(name: "NormalizedVoterName", table: "Votes");
 
-            migrationBuilder.DropColumn(
-                name: "SessionId",
-                table: "Votes");
+            migrationBuilder.DropColumn(name: "SessionId", table: "Votes");
         }
     }
 }

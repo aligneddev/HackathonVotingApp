@@ -115,7 +115,10 @@ var votes = app.MapGroup("/api/votes");
 
 votes.MapPost(
     "/ballots",
-    async (HackathonVotingApp.Api.Models.SubmitBallotRequest request, IVotingService votingService) =>
+    async (
+        HackathonVotingApp.Api.Models.SubmitBallotRequest request,
+        IVotingService votingService
+    ) =>
     {
         var result = await votingService.SubmitBallotAsync(request);
         if (result.Success)
@@ -128,7 +131,8 @@ votes.MapPost(
             ),
             HackathonVotingApp.Api.Models.SubmitBallotError.DuplicateBallot => Results.Conflict(),
             HackathonVotingApp.Api.Models.SubmitBallotError.InvalidVoter
-            or HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot => Results.BadRequest(),
+            or HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot =>
+                Results.BadRequest(),
             _ => Results.BadRequest(),
         };
     }

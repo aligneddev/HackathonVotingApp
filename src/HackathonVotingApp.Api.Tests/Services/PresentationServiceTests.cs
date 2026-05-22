@@ -61,7 +61,12 @@ public class PresentationServiceTests
     {
         // Arrange
         await using var db = CreateDb();
-        var presentation = new Presentation { Title = "My Talk", PresenterName = "Carol", Description = "Cool stuff" };
+        var presentation = new Presentation
+        {
+            Title = "My Talk",
+            PresenterName = "Carol",
+            Description = "Cool stuff",
+        };
         db.Presentations.Add(presentation);
         await db.SaveChangesAsync();
         var svc = new PresentationService(db);
@@ -99,7 +104,11 @@ public class PresentationServiceTests
         // Arrange
         await using var db = CreateDb();
         var svc = new PresentationService(db);
-        var request = new CreatePresentationRequest("AI in Production", "Dan Dev", "Lessons learned");
+        var request = new CreatePresentationRequest(
+            "AI in Production",
+            "Dan Dev",
+            "Lessons learned"
+        );
 
         // Act
         var result = await svc.CreateAsync(request);
@@ -151,7 +160,12 @@ public class PresentationServiceTests
     {
         // Arrange
         await using var db = CreateDb();
-        var presentation = new Presentation { Title = "Old Title", PresenterName = "Gina", Description = "Old desc" };
+        var presentation = new Presentation
+        {
+            Title = "Old Title",
+            PresenterName = "Gina",
+            Description = "Old desc",
+        };
         db.Presentations.Add(presentation);
         await db.SaveChangesAsync();
         var svc = new PresentationService(db);
@@ -186,11 +200,20 @@ public class PresentationServiceTests
     {
         // Arrange
         await using var db = CreateDb();
-        var presentation = new Presentation { Title = "A", PresenterName = "B", Description = "C" };
+        var presentation = new Presentation
+        {
+            Title = "A",
+            PresenterName = "B",
+            Description = "C",
+        };
         db.Presentations.Add(presentation);
         await db.SaveChangesAsync();
         var svc = new PresentationService(db);
-        var request = new UpdatePresentationRequest("Updated Title", "Updated Presenter", "Updated Desc");
+        var request = new UpdatePresentationRequest(
+            "Updated Title",
+            "Updated Presenter",
+            "Updated Desc"
+        );
 
         // Act
         var result = await svc.UpdateAsync(presentation.Id, request);

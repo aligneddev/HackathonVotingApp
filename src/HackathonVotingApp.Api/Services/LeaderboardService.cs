@@ -72,16 +72,14 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
             .ThenBy(p => p.FinalReachedAt)
             .ThenBy(p => p.Id)
             .Take(limit)
-            .Select(p =>
-                new LeaderboardEntryResponse(
-                    p.Id,
-                    p.Title,
-                    p.PresenterName,
-                    p.VoteCount,
-                    p.TotalPoints,
-                    p.AveragePoints
-                )
-            )
+            .Select(p => new LeaderboardEntryResponse(
+                p.Id,
+                p.Title,
+                p.PresenterName,
+                p.VoteCount,
+                p.TotalPoints,
+                p.AveragePoints
+            ))
             .ToListAsync();
     }
 }

@@ -59,18 +59,24 @@ public class LeaderboardEndpointTests : IClassFixture<WebApplicationFactory<Prog
         // Arrange
         var client = CreateClientWithFreshDb();
 
-        var pres1Response = await client.PostAsJsonAsync("/api/presentations", new
-        {
-            title = "Popular Talk",
-            presenterName = "Speaker A",
-            description = "Has votes",
-        });
-        var pres2Response = await client.PostAsJsonAsync("/api/presentations", new
-        {
-            title = "Quiet Talk",
-            presenterName = "Speaker B",
-            description = "No votes",
-        });
+        var pres1Response = await client.PostAsJsonAsync(
+            "/api/presentations",
+            new
+            {
+                title = "Popular Talk",
+                presenterName = "Speaker A",
+                description = "Has votes",
+            }
+        );
+        var pres2Response = await client.PostAsJsonAsync(
+            "/api/presentations",
+            new
+            {
+                title = "Quiet Talk",
+                presenterName = "Speaker B",
+                description = "No votes",
+            }
+        );
         var pres1 = await pres1Response.Content.ReadFromJsonAsync<PresentationResponseDto>();
 
         // Cast one vote for pres1 (pres2 gets zero)

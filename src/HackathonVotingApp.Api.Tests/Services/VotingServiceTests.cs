@@ -159,9 +159,24 @@ public class VotingServiceTests
         var p2 = new Presentation { Title = "Two Second Places", PresenterName = "Speaker B" };
         db.Presentations.AddRange(p1, p2);
         db.Votes.AddRange(
-            new Vote { PresentationId = p1.Id, VoterName = "A", Ranking = 1 }, // 8 points
-            new Vote { PresentationId = p2.Id, VoterName = "B", Ranking = 2 }, // 5 points
-            new Vote { PresentationId = p2.Id, VoterName = "C", Ranking = 2 } // 5 points => 10 total
+            new Vote
+            {
+                PresentationId = p1.Id,
+                VoterName = "A",
+                Ranking = 1,
+            }, // 8 points
+            new Vote
+            {
+                PresentationId = p2.Id,
+                VoterName = "B",
+                Ranking = 2,
+            }, // 5 points
+            new Vote
+            {
+                PresentationId = p2.Id,
+                VoterName = "C",
+                Ranking = 2,
+            } // 5 points => 10 total
         );
         await db.SaveChangesAsync();
         var svc = new VotingService(db);

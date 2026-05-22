@@ -92,7 +92,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act
-        var response = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        var response = await client.PostAsJsonAsync(
+            $"/api/votes/{presentationId}",
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
 
         // Assert — expects 201 once implemented
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -106,7 +114,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var response = await client.PostAsJsonAsync($"/api/votes/{nonExistentId}", new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        var response = await client.PostAsJsonAsync(
+            $"/api/votes/{nonExistentId}",
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
 
         // Assert — expects 404 (presentation not found) once implemented
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -122,7 +138,14 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Send request with the dedup cookie already set (simulates a browser that already voted)
         var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"/api/votes/{presentationId}");
         requestMsg.Headers.Add("Cookie", $"hackathon-voted-{presentationId}=true");
-        requestMsg.Content = JsonContent.Create(new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        requestMsg.Content = JsonContent.Create(
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
 
         // Act
         var response = await client.SendAsync(requestMsg);
@@ -143,11 +166,36 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = "Alice",
             entries = new[]
             {
-                new { presentationId = presentationIds[0], ranking = 1, notes = "Great idea" },
-                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
-                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
-                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
-                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 1,
+                    notes = "Great idea",
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[2],
+                    ranking = 3,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[3],
+                    ranking = 4,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[4],
+                    ranking = 5,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -170,10 +218,30 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = "Alice",
             entries = new[]
             {
-                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
-                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
-                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
-                new { presentationId = presentationIds[3], ranking = 5, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 1,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[2],
+                    ranking = 3,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[3],
+                    ranking = 5,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -196,11 +264,36 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = "Alice",
             entries = new[]
             {
-                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
-                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
-                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
-                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
-                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 1,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[2],
+                    ranking = 3,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[3],
+                    ranking = 4,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[4],
+                    ranking = 5,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -209,11 +302,36 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = " alice ",
             entries = new[]
             {
-                new { presentationId = presentationIds[4], ranking = 1, notes = (string?)null },
-                new { presentationId = presentationIds[3], ranking = 2, notes = (string?)null },
-                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
-                new { presentationId = presentationIds[1], ranking = 4, notes = (string?)null },
-                new { presentationId = presentationIds[0], ranking = 5, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[4],
+                    ranking = 1,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[3],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[2],
+                    ranking = 3,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 4,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 5,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -239,11 +357,36 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = "Alice",
             entries = new[]
             {
-                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
-                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
-                new { presentationId = presentationIds[2], ranking = 3, notes = (string?)null },
-                new { presentationId = presentationIds[3], ranking = 4, notes = (string?)null },
-                new { presentationId = presentationIds[4], ranking = 5, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 1,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[2],
+                    ranking = 3,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[3],
+                    ranking = 4,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[4],
+                    ranking = 5,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -266,8 +409,18 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             voterName = "Alice",
             entries = new[]
             {
-                new { presentationId = presentationIds[0], ranking = 1, notes = (string?)null },
-                new { presentationId = presentationIds[1], ranking = 2, notes = (string?)null },
+                new
+                {
+                    presentationId = presentationIds[0],
+                    ranking = 1,
+                    notes = (string?)null,
+                },
+                new
+                {
+                    presentationId = presentationIds[1],
+                    ranking = 2,
+                    notes = (string?)null,
+                },
             },
         };
 
@@ -317,7 +470,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act — cast one vote, then check count
-        await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        await client.PostAsJsonAsync(
+            $"/api/votes/{presentationId}",
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
         var countResponse = await client.GetAsync($"/api/votes/{presentationId}/count");
 
         // Assert — expects count to be 1 after one successful vote
@@ -336,9 +497,24 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         await SeedVotesAsync(
             dbName,
-            new Vote { PresentationId = firstPresentationId, Ranking = 1, Notes = "Great architecture" },
-            new Vote { PresentationId = firstPresentationId, Ranking = 2, Notes = "Solid delivery" },
-            new Vote { PresentationId = secondPresentationId, Ranking = 4, Notes = "Needs polish" }
+            new Vote
+            {
+                PresentationId = firstPresentationId,
+                Ranking = 1,
+                Notes = "Great architecture",
+            },
+            new Vote
+            {
+                PresentationId = firstPresentationId,
+                Ranking = 2,
+                Notes = "Solid delivery",
+            },
+            new Vote
+            {
+                PresentationId = secondPresentationId,
+                Ranking = 4,
+                Notes = "Needs polish",
+            }
         );
 
         // Act
@@ -424,7 +600,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         await client.PostAsync("/api/admin/voting/end", null);
 
         // Act
-        var voteResponse = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        var voteResponse = await client.PostAsJsonAsync(
+            $"/api/votes/{presentationId}",
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
 
         // Assert
         voteResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -440,7 +624,15 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         await client.PostAsync("/api/admin/voting/start", null);
 
         // Act
-        var voteResponse = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { voterName = "Alice", ranking = 1, notes = (string?)null });
+        var voteResponse = await client.PostAsJsonAsync(
+            $"/api/votes/{presentationId}",
+            new
+            {
+                voterName = "Alice",
+                ranking = 1,
+                notes = (string?)null,
+            }
+        );
 
         // Assert
         voteResponse.StatusCode.Should().Be(HttpStatusCode.Created);

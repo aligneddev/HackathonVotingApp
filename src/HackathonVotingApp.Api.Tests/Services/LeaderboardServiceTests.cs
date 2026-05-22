@@ -62,7 +62,9 @@ public class LeaderboardServiceTests
         // Arrange
         await using var db = CreateDb();
         for (var i = 0; i < 15; i++)
-            db.Presentations.Add(new Presentation { Title = $"Talk {i}", PresenterName = "Speaker" });
+            db.Presentations.Add(
+                new Presentation { Title = $"Talk {i}", PresenterName = "Speaker" }
+            );
         await db.SaveChangesAsync();
         var svc = new LeaderboardService(db);
 
@@ -79,7 +81,9 @@ public class LeaderboardServiceTests
         // Arrange
         await using var db = CreateDb();
         for (var i = 0; i < 60; i++)
-            db.Presentations.Add(new Presentation { Title = $"Talk {i}", PresenterName = "Speaker" });
+            db.Presentations.Add(
+                new Presentation { Title = $"Talk {i}", PresenterName = "Speaker" }
+            );
         await db.SaveChangesAsync();
         var svc = new LeaderboardService(db);
 
