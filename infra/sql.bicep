@@ -2,17 +2,22 @@ param location string
 param environmentName string
 param appName string
 
+@description('SQL server administrator login used for initial bootstrap access.')
+param sqlAdminLogin string = 'sqladmin'
+
 @secure()
 param sqlAdminPassword string
 
-var serverName = '${appName}-${environmentName}-sql'
+var nameSeed = toLower(replace(replace('${appName}${environmentName}', '-', ''), '_', ''))
+var uniqueSuffix = take(uniqueString(resourceGroup().id, appName, environmentName), 6)
+var serverName = take('${nameSeed}sql${uniqueSuffix}', 63)
 var databaseName = '${appName}-db'
 
 resource sqlServer 'Microsoft.Sql/servers@2023-08-01' = {
   name: serverName
   location: location
   properties: {
-    administratorLogin: 'sqladmin'
+    administratorLogin: sqlAdminLogin
     administratorLoginPassword: sqlAdminPassword
     minimalTlsVersion: '1.2'
     publicNetworkAccess: 'Enabled'
@@ -46,3 +51,4 @@ resource sqlDatabase 'Microsoft.Sql/servers/databases@2023-08-01' = {
 
 output serverFqdn string = sqlServer.properties.fullyQualifiedDomainName
 output databaseName string = sqlDatabase.name
+output sqlAdminLogin string = sqlAdminLogin

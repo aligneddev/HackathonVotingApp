@@ -43,7 +43,7 @@ az account show --query id -o tsv
 ```
 
 ### `SQL_ADMIN_PASSWORD`
-A strong password for the Azure SQL Server `sqladmin` account.
+A strong password for the Azure SQL Server admin account (`sqladmin` by default).
 
 - Must be 12+ characters with uppercase, lowercase, digits, and symbols.
 - Example: generate with `openssl rand -base64 18` then append `!Az1` to meet complexity rules.
@@ -202,6 +202,19 @@ az deployment group create \
       sqlAdminPassword="<your-sql-admin-password>"
 ```
 
+Optional: override the SQL admin login if you don't want the default `sqladmin`.
+
+```bash
+az deployment group create \
+  --resource-group kl-hackathon-rg \
+  --template-file infra/main.bicep \
+  --parameters \
+      environmentName=dev \
+      appName=kl-hackathon-voting \
+      sqlAdminLogin="<your-admin-login>" \
+      sqlAdminPassword="<your-sql-admin-password>"
+```
+
 ### Step 2 — Retrieve and Register the SWA Token
 
 ```bash
@@ -239,3 +252,6 @@ App Service F1 has 60 CPU minutes/day and no custom domain or SSL offload suppor
 
 ### SQL Auto-Pause
 The SQL database is configured `autoPauseDelay: 60` (pauses after 60 minutes idle). The first request after a pause incurs a cold-start delay of ~30 seconds. This is acceptable for a hackathon event.
+
+### SQL Server Naming
+Azure SQL server names are globally unique. The template now appends a deterministic suffix, so deployments are less likely to fail on name collisions.

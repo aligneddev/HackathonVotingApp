@@ -4,6 +4,9 @@ param location string = resourceGroup().location
 param environmentName string = 'dev'
 param appName string = 'kl-hackathon-voting'
 
+@description('SQL server administrator login used for initial bootstrap access.')
+param sqlAdminLogin string = 'sqladmin'
+
 @secure()
 param sqlAdminPassword string
 
@@ -13,6 +16,7 @@ module sql './sql.bicep' = {
     location: location
     environmentName: environmentName
     appName: appName
+    sqlAdminLogin: sqlAdminLogin
     sqlAdminPassword: sqlAdminPassword
   }
 }
@@ -32,7 +36,7 @@ module appService './appservice.bicep' = {
     location: location
     environmentName: environmentName
     appName: appName
-    sqlConnectionString: 'Server=tcp:${sql.outputs.serverFqdn},1433;Initial Catalog=${sql.outputs.databaseName};Persist Security Info=False;User ID=sqladmin;Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
+    sqlConnectionString: 'Server=tcp:${sql.outputs.serverFqdn},1433;Initial Catalog=${sql.outputs.databaseName};Persist Security Info=False;User ID=${sql.outputs.sqlAdminLogin};Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
     corsOrigin: 'https://${staticWebApp.outputs.staticWebAppDefaultHostName}'
   }
 }

@@ -113,3 +113,5 @@ had to make several fixes, including api route, EF Migrations
 - [X] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests
 - [ ] Aspirify
+- [ ] Switch to Managed Identity
+- [ ] Tie login to a sudo user in the database or at least 
