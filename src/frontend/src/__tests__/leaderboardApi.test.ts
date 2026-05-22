@@ -15,7 +15,7 @@ describe("leaderboardApi", () => {
 
     await leaderboardApi.getLeaderboard();
 
-    expect(mockFetch).toHaveBeenCalledWith("/leaderboard");
+    expect(mockFetch).toHaveBeenCalledWith("/api/leaderboard");
   });
 
   it("getLeaderboard_returnsRankedList", async () => {

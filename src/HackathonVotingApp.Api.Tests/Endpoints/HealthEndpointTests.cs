@@ -18,7 +18,7 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetHealth_ReturnsOk()
     {
         // Act
-        var response = await _client.GetAsync("/health");
+        var response = await _client.GetAsync("/api/health");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -28,7 +28,7 @@ public class HealthEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     public async Task GetHealth_ReturnsExpectedBody()
     {
         // Act
-        var response = await _client.GetAsync("/health");
+        var response = await _client.GetAsync("/api/health");
         var body = await response.Content.ReadAsStringAsync();
 
         // Assert

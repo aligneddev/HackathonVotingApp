@@ -59,9 +59,9 @@ if (allowedOrigins.Length > 0)
     app.UseCors("FrontendCors");
 }
 
-app.MapGet("/health", () => Results.Ok(new { status = "healthy" }));
+app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
 
-var presentations = app.MapGroup("/presentations");
+var presentations = app.MapGroup("/api/presentations");
 
 presentations.MapGet(
     "/",
@@ -111,7 +111,7 @@ presentations.MapDelete(
     }
 );
 
-var votes = app.MapGroup("/votes");
+var votes = app.MapGroup("/api/votes");
 
 votes.MapPost(
     "/{presentationId:guid}",
@@ -168,11 +168,11 @@ votes.MapGet(
 );
 
 app.MapGet(
-    "/leaderboard",
+    "/api/leaderboard",
     async (ILeaderboardService svc) => Results.Ok(await svc.GetLeaderboardAsync())
 );
 
-var admin = app.MapGroup("/admin");
+var admin = app.MapGroup("/api/admin");
 
 admin.MapGet(
     "/results",

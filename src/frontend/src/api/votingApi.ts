@@ -6,7 +6,7 @@ export const votingApi = {
     if (ranking !== undefined) body.ranking = ranking;
     if (notes !== undefined) body.notes = notes;
 
-    const res = await fetch(`${API_BASE}/votes/${presentationId}`, {
+    const res = await fetch(`${API_BASE}/api/votes/${presentationId}`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(body),
@@ -15,7 +15,7 @@ export const votingApi = {
   },
 
   getVoteCount: async (presentationId: string): Promise<number> => {
-    const res = await fetch(`${API_BASE}/votes/${presentationId}/count`, { method: 'GET' });
+    const res = await fetch(`${API_BASE}/api/votes/${presentationId}/count`, { method: 'GET' });
     if (!res.ok) throw new Error(`Failed to get vote count: ${res.status}`);
     const data = await res.json();
     return data.count;

@@ -47,7 +47,7 @@ public class LeaderboardEndpointTests : IClassFixture<WebApplicationFactory<Prog
         var client = CreateClientWithFreshDb();
 
         // Act — GET /leaderboard does not exist yet; will return 404 (red)
-        var response = await client.GetAsync("/leaderboard");
+        var response = await client.GetAsync("/api/leaderboard");
 
         // Assert — expects 200 once implemented
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -59,13 +59,13 @@ public class LeaderboardEndpointTests : IClassFixture<WebApplicationFactory<Prog
         // Arrange
         var client = CreateClientWithFreshDb();
 
-        var pres1Response = await client.PostAsJsonAsync("/presentations", new
+        var pres1Response = await client.PostAsJsonAsync("/api/presentations", new
         {
             title = "Popular Talk",
             presenterName = "Speaker A",
             description = "Has votes",
         });
-        var pres2Response = await client.PostAsJsonAsync("/presentations", new
+        var pres2Response = await client.PostAsJsonAsync("/api/presentations", new
         {
             title = "Quiet Talk",
             presenterName = "Speaker B",
@@ -74,10 +74,10 @@ public class LeaderboardEndpointTests : IClassFixture<WebApplicationFactory<Prog
         var pres1 = await pres1Response.Content.ReadFromJsonAsync<PresentationResponseDto>();
 
         // Cast one vote for pres1 (pres2 gets zero)
-        await client.PostAsync($"/votes/{pres1!.Id}", null);
+        await client.PostAsync($"/api/votes/{pres1!.Id}", null);
 
         // Act — GET /leaderboard does not exist yet (red)
-        var response = await client.GetAsync("/leaderboard");
+        var response = await client.GetAsync("/api/leaderboard");
         var body = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
 
         // Assert — pres1 (1 vote) should come before pres2 (0 votes)
@@ -92,7 +92,7 @@ public class LeaderboardEndpointTests : IClassFixture<WebApplicationFactory<Prog
         var client = CreateClientWithFreshDb();
 
         // Act — GET /leaderboard does not exist yet (red)
-        var response = await client.GetAsync("/leaderboard");
+        var response = await client.GetAsync("/api/leaderboard");
         var body = await response.Content.ReadFromJsonAsync<List<LeaderboardEntryDto>>();
 
         // Assert

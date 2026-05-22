@@ -37,7 +37,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     [Fact]
     public async Task GetPresentations_ReturnsOkWithEmptyList()
     {
-        var response = await _client.GetAsync("/presentations");
+        var response = await _client.GetAsync("/api/presentations");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadAsStringAsync();
@@ -54,7 +54,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             description = "A demo of something amazing",
         };
 
-        var response = await _client.PostAsJsonAsync("/presentations", newPresentation);
+        var response = await _client.PostAsJsonAsync("/api/presentations", newPresentation);
 
         response.StatusCode.Should().Be(HttpStatusCode.Created);
     }
@@ -69,7 +69,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             description = "Serverless everything",
         };
 
-        var response = await _client.PostAsJsonAsync("/presentations", newPresentation);
+        var response = await _client.PostAsJsonAsync("/api/presentations", newPresentation);
         var created = await response.Content.ReadFromJsonAsync<PresentationResponse>();
 
         created.Should().NotBeNull();
@@ -88,11 +88,11 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             presenterName = "Speaker",
             description = "",
         };
-        var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
+        var createResponse = await _client.PostAsJsonAsync("/api/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
         // Then get it
-        var response = await _client.GetAsync($"/presentations/{created!.Id}");
+        var response = await _client.GetAsync($"/api/presentations/{created!.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -100,7 +100,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
     [Fact]
     public async Task GetPresentation_MissingId_ReturnsNotFound()
     {
-        var response = await _client.GetAsync($"/presentations/{Guid.NewGuid()}");
+        var response = await _client.GetAsync($"/api/presentations/{Guid.NewGuid()}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
@@ -115,7 +115,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             presenterName = "Speaker",
             description = "",
         };
-        var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
+        var createResponse = await _client.PostAsJsonAsync("/api/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
         // Update
@@ -125,7 +125,7 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             presenterName = "Speaker",
             description = "Updated",
         };
-        var response = await _client.PutAsJsonAsync($"/presentations/{created!.Id}", update);
+        var response = await _client.PutAsJsonAsync($"/api/presentations/{created!.Id}", update);
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
@@ -140,11 +140,11 @@ public class PresentationEndpointTests : IClassFixture<WebApplicationFactory<Pro
             presenterName = "Speaker",
             description = "",
         };
-        var createResponse = await _client.PostAsJsonAsync("/presentations", newPresentation);
+        var createResponse = await _client.PostAsJsonAsync("/api/presentations", newPresentation);
         var created = await createResponse.Content.ReadFromJsonAsync<PresentationResponse>();
 
         // Delete
-        var response = await _client.DeleteAsync($"/presentations/{created!.Id}");
+        var response = await _client.DeleteAsync($"/api/presentations/{created!.Id}");
 
         response.StatusCode.Should().Be(HttpStatusCode.NoContent);
     }

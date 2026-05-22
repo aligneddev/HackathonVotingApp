@@ -15,7 +15,7 @@ describe('votingApi', () => {
     await votingApi.castVote('abc-123');
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/votes/abc-123',
+      '/api/votes/abc-123',
       expect.objectContaining({ method: 'POST' })
     );
   });
@@ -29,7 +29,7 @@ describe('votingApi', () => {
     const count = await votingApi.getVoteCount('abc-123');
 
     expect(mockFetch).toHaveBeenCalledWith(
-      '/votes/abc-123/count',
+      '/api/votes/abc-123/count',
       expect.anything()
     );
     expect(count).toBe(5);

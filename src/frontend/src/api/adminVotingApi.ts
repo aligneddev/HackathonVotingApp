@@ -7,19 +7,19 @@ export interface VotingState {
 
 export const adminVotingApi = {
   getVotingState: async (): Promise<VotingState> => {
-    const res = await fetch(`${API_BASE}/admin/voting-state`);
+    const res = await fetch(`${API_BASE}/api/admin/voting-state`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
 
   startVoting: async (): Promise<VotingState> => {
-    const res = await fetch(`${API_BASE}/admin/voting/start`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/api/admin/voting/start`, { method: 'POST' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
 
   endVoting: async (): Promise<VotingState> => {
-    const res = await fetch(`${API_BASE}/admin/voting/end`, { method: 'POST' });
+    const res = await fetch(`${API_BASE}/api/admin/voting/end`, { method: 'POST' });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },

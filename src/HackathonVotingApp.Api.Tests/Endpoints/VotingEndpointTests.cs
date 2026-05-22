@@ -49,7 +49,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             presenterName = "Test Speaker",
             description = "Used for voting tests",
         };
-        var response = await client.PostAsJsonAsync("/presentations", request);
+        var response = await client.PostAsJsonAsync("/api/presentations", request);
         var created = await response.Content.ReadFromJsonAsync<PresentationResponseDto>();
         return created!.Id;
     }
@@ -73,7 +73,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act
-        var response = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+        var response = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
 
         // Assert — expects 201 once implemented
         response.StatusCode.Should().Be(HttpStatusCode.Created);
@@ -87,7 +87,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var nonExistentId = Guid.NewGuid();
 
         // Act
-        var response = await client.PostAsJsonAsync($"/votes/{nonExistentId}", new { ranking = 1, notes = (string?)null });
+        var response = await client.PostAsJsonAsync($"/api/votes/{nonExistentId}", new { ranking = 1, notes = (string?)null });
 
         // Assert — expects 404 (presentation not found) once implemented
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -101,7 +101,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Send request with the dedup cookie already set (simulates a browser that already voted)
-        var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"/votes/{presentationId}");
+        var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"/api/votes/{presentationId}");
         requestMsg.Headers.Add("Cookie", $"hackathon-voted-{presentationId}=true");
         requestMsg.Content = JsonContent.Create(new { ranking = 1, notes = (string?)null });
 
@@ -120,7 +120,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act — route GET /votes/{presentationId}/count does not exist yet
-        var response = await client.GetAsync($"/votes/{presentationId}/count");
+        var response = await client.GetAsync($"/api/votes/{presentationId}/count");
 
         // Assert — expects 200 with { "count": 0 } once implemented
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -137,7 +137,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var nonExistentId = Guid.NewGuid();
 
         // Act — route does not exist yet
-        var response = await client.GetAsync($"/votes/{nonExistentId}/count");
+        var response = await client.GetAsync($"/api/votes/{nonExistentId}/count");
 
         // Assert — expects 404 (presentation not found) once implemented
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -151,8 +151,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var presentationId = await SeedPresentationAsync(client);
 
         // Act — cast one vote, then check count
-        await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
-        var countResponse = await client.GetAsync($"/votes/{presentationId}/count");
+        await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+        var countResponse = await client.GetAsync($"/api/votes/{presentationId}/count");
 
         // Assert — expects count to be 1 after one successful vote
         countResponse.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -176,7 +176,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         );
 
         // Act
-        var response = await client.GetAsync("/admin/results");
+        var response = await client.GetAsync("/api/admin/results");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -219,7 +219,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         );
 
         // Act
-        var response = await client.GetAsync("/admin/results");
+        var response = await client.GetAsync("/api/admin/results");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -240,7 +240,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         var client = CreateClientWithFreshDb(out _);
 
         // Act
-        var response = await client.GetAsync("/admin/voting-state");
+        var response = await client.GetAsync("/api/admin/voting-state");
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.OK);
@@ -255,10 +255,10 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationId = await SeedPresentationAsync(client);
-        await client.PostAsync("/admin/voting/end", null);
+        await client.PostAsync("/api/admin/voting/end", null);
 
         // Act
-        var voteResponse = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+        var voteResponse = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
 
         // Assert
         voteResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
@@ -270,11 +270,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationId = await SeedPresentationAsync(client);
-        await client.PostAsync("/admin/voting/end", null);
-        await client.PostAsync("/admin/voting/start", null);
+        await client.PostAsync("/api/admin/voting/end", null);
+        await client.PostAsync("/api/admin/voting/start", null);
 
         // Act
-        var voteResponse = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+        var voteResponse = await client.PostAsJsonAsync($"/api/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
 
         // Assert
         voteResponse.StatusCode.Should().Be(HttpStatusCode.Created);

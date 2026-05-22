@@ -17,7 +17,7 @@ export interface AdminResultEntry {
 
 export const adminResultsApi = {
   getResults: async (): Promise<AdminResultEntry[]> => {
-    const res = await fetch(`${API_BASE}/admin/results`);
+    const res = await fetch(`${API_BASE}/api/admin/results`);
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },
