@@ -12,13 +12,23 @@ public class VotingService(AppDbContext db) : IVotingService
         if (state is not null)
             return state;
 
-        state = new VotingState { Id = 1, IsOpen = true, UpdatedAt = DateTimeOffset.UtcNow };
+        state = new VotingState
+        {
+            Id = 1,
+            IsOpen = true,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
         db.VotingStates.Add(state);
         await db.SaveChangesAsync();
         return state;
     }
 
-    public async Task<bool> CastVoteAsync(Guid presentationId, int ranking, string? notes)
+    public async Task<bool> CastVoteAsync(
+        Guid presentationId,
+        string voterName,
+        int ranking,
+        string? notes
+    )
     {
         var votingState = await GetOrCreateVotingStateAsync();
         if (!votingState.IsOpen)
@@ -36,6 +46,7 @@ public class VotingService(AppDbContext db) : IVotingService
             new Vote
             {
                 PresentationId = presentationId,
+                VoterName = voterName,
                 Ranking = ranking,
                 Notes = notes,
             }
@@ -79,19 +90,20 @@ public class VotingService(AppDbContext db) : IVotingService
 
         var notesByPresentation = notes
             .GroupBy(v => v.PresentationId)
-            .ToDictionary(g => g.Key, g => (IReadOnlyList<VoteNoteResponse>)g.Select(v => v.Note).ToList());
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<VoteNoteResponse>)g.Select(v => v.Note).ToList()
+            );
 
         return summaries
-            .Select(s =>
-                new AdminVoteResultResponse(
-                    s.Id,
-                    s.Title,
-                    s.PresenterName,
-                    s.VoteCount,
-                    s.AverageRanking,
-                    notesByPresentation.GetValueOrDefault(s.Id, Array.Empty<VoteNoteResponse>())
-                )
-            )
+            .Select(s => new AdminVoteResultResponse(
+                s.Id,
+                s.Title,
+                s.PresenterName,
+                s.VoteCount,
+                s.AverageRanking,
+                notesByPresentation.GetValueOrDefault(s.Id, Array.Empty<VoteNoteResponse>())
+            ))
             .ToList();
     }
 

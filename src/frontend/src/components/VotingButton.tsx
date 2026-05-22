@@ -11,7 +11,7 @@ export default function VotingButton({ presentationId }: VotingButtonProps) {
 
   const handleVote = async () => {
     try {
-      await votingApi.castVote(presentationId);
+      await votingApi.castVote(presentationId, 'Anonymous');
       localStorage.setItem(storageKey, 'true');
       setVoted(true);
     } catch {

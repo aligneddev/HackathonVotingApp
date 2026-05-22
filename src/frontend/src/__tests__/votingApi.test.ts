@@ -12,7 +12,7 @@ describe('votingApi', () => {
     );
     vi.stubGlobal('fetch', mockFetch);
 
-    await votingApi.castVote('abc-123');
+    await votingApi.castVote('abc-123', 'Ada Lovelace');
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/votes/abc-123',

@@ -133,8 +133,16 @@ votes.MapPost(
         if (request.Ranking < 1 || request.Ranking > 5)
             return Results.BadRequest(new { error = "Ranking must be between 1 and 5." });
 
+        var voterName = request.VoterName?.Trim();
+        if (string.IsNullOrWhiteSpace(voterName))
+            return Results.BadRequest(new { error = "Name is required." });
+
+        if (voterName.Length > 120)
+            return Results.BadRequest(new { error = "Name must be 120 characters or fewer." });
+
         var success = await votingService.CastVoteAsync(
             presentationId,
+            voterName,
             request.Ranking,
             request.Notes
         );

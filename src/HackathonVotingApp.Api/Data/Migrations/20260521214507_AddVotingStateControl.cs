@@ -17,19 +17,22 @@ namespace HackathonVotingApp.Api.Data.Migrations
                 {
                     Id = table.Column<int>(type: "int", nullable: false),
                     IsOpen = table.Column<bool>(type: "bit", nullable: false),
-                    UpdatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    UpdatedAt = table.Column<DateTimeOffset>(
+                        type: "datetimeoffset",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_VotingStates", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "VotingStates");
+            migrationBuilder.DropTable(name: "VotingStates");
         }
     }
 }

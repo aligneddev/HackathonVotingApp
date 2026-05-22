@@ -6,7 +6,10 @@
 A hackathon entry submitted by a presenter. Has a title, presenter name, and description. Managed by admins before the event. The unit that attendees vote on.
 
 ### Vote
-A single attendee's choice for a Presentation. One vote per device (enforced via cookie). Cast during the voting phase.
+A single Attendee's ranking submission for a Presentation. Votes are anonymous-auth (no SSO) and require a self-declared voter name. The app asks attendees to use their real name and vote once.
+
+### Attendee
+An eligible participant in the hackathon event who submits a ballot using a self-declared real name.
 
 ### Leaderboard
 A **live, operational** view showing all Presentations ranked by vote count. Visible to attendees during the event. Route: `/leaderboard`.

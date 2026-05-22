@@ -16,6 +16,7 @@ export default function VotingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVotingOpen, setIsVotingOpen] = useState(true);
+  const [voterName, setVoterName] = useState('');
 
   useEffect(() => {
     Promise.all([presentationApi.getPresentations(), adminVotingApi.getVotingState()])
@@ -36,6 +37,11 @@ export default function VotingPage() {
       return;
     }
 
+    if (!voterName.trim()) {
+      setError('Please enter your name before submitting.');
+      return;
+    }
+
     if (submitting || submitted) return;
     setSubmitting(true);
     setError(null);
@@ -43,7 +49,7 @@ export default function VotingPage() {
     try {
       for (let i = 0; i < rankedItems.length; i++) {
         const item = rankedItems[i];
-        await votingApi.castVote(item.presentation.id, i + 1, item.notes || undefined);
+        await votingApi.castVote(item.presentation.id, voterName.trim(), i + 1, item.notes || undefined);
       }
       localStorage.setItem(getSessionKey(rankedItems.map(r => r.presentation)), 'true');
       setSubmitted(true);
@@ -89,6 +95,9 @@ export default function VotingPage() {
         <p className="text-gray-400 text-sm mb-6">
           Drag or use the arrows to rank from best (1) to last. Add optional notes for each.
         </p>
+        <p className="text-amber-300 text-sm mb-4">
+          Please use your real name and only vote once.
+        </p>
 
         {loading ? (
           <p className="text-gray-400">Loading presentations...</p>
@@ -109,6 +118,22 @@ export default function VotingPage() {
           </div>
         ) : (
           <>
+            <div className="mb-4">
+              <label htmlFor="voter-name" className="block text-sm font-medium text-gray-200 mb-1">
+                Your name
+              </label>
+              <input
+                id="voter-name"
+                type="text"
+                value={voterName}
+                onChange={e => setVoterName(e.target.value)}
+                maxLength={120}
+                disabled={submitting}
+                placeholder="Enter your real name"
+                className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+
             <RankedVotingList
               items={rankedItems}
               onChange={setRankedItems}

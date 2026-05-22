@@ -19,12 +19,16 @@ namespace HackathonVotingApp.Api.Data.Migrations
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     PresenterName = table.Column<string>(type: "nvarchar(max)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    CreatedAt = table.Column<DateTimeOffset>(
+                        type: "datetimeoffset",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Presentations", x => x.Id);
-                });
+                }
+            );
 
             migrationBuilder.CreateTable(
                 name: "Votes",
@@ -34,22 +38,24 @@ namespace HackathonVotingApp.Api.Data.Migrations
                     PresentationId = table.Column<Guid>(type: "uniqueidentifier", nullable: false),
                     Ranking = table.Column<int>(type: "int", nullable: false),
                     Notes = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    CreatedAt = table.Column<DateTimeOffset>(type: "datetimeoffset", nullable: false)
+                    CreatedAt = table.Column<DateTimeOffset>(
+                        type: "datetimeoffset",
+                        nullable: false
+                    ),
                 },
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_Votes", x => x.Id);
-                });
+                }
+            );
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
-            migrationBuilder.DropTable(
-                name: "Presentations");
+            migrationBuilder.DropTable(name: "Presentations");
 
-            migrationBuilder.DropTable(
-                name: "Votes");
+            migrationBuilder.DropTable(name: "Votes");
         }
     }
 }

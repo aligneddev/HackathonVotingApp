@@ -45,7 +45,7 @@ describe('VotingButton', () => {
     const button = screen.getByRole('button', { name: /^vote$/i });
     await user.click(button);
 
-    expect(mockApi.castVote).toHaveBeenCalledWith('abc-123');
+    expect(mockApi.castVote).toHaveBeenCalledWith('abc-123', 'Anonymous');
   });
 
   it('after_successful_vote_button_shows_voted_and_is_disabled', async () => {

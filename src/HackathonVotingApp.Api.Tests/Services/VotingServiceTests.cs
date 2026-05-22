@@ -36,7 +36,7 @@ public class VotingServiceTests
         var svc = new VotingService(db);
 
         // Act — will throw NotImplementedException (red)
-        var result = await svc.CastVoteAsync(presentation.Id, 1, null);
+        var result = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
 
         // Assert
         result.Should().BeTrue();
@@ -50,7 +50,7 @@ public class VotingServiceTests
         var svc = new VotingService(db);
 
         // Act — will throw NotImplementedException (red)
-        var result = await svc.CastVoteAsync(Guid.NewGuid(), 1, null);
+        var result = await svc.CastVoteAsync(Guid.NewGuid(), "Alice", 1, null);
 
         // Assert
         result.Should().BeFalse();
@@ -65,8 +65,8 @@ public class VotingServiceTests
         var svc = new VotingService(db);
 
         // Act — will throw NotImplementedException on first call (red)
-        var firstResult = await svc.CastVoteAsync(presentation.Id, 1, null);
-        var secondResult = await svc.CastVoteAsync(presentation.Id, 1, null);
+        var firstResult = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
+        var secondResult = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
 
         // Assert — first succeeds, second is duplicate and returns false
         firstResult.Should().BeTrue();
@@ -99,7 +99,7 @@ public class VotingServiceTests
         var svc = new VotingService(db);
 
         // Act — will throw NotImplementedException (red)
-        await svc.CastVoteAsync(presentation.Id, 1, null);
+        await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
         var count = await svc.GetVoteCountAsync(presentation.Id);
 
         // Assert
@@ -144,7 +144,7 @@ public class VotingServiceTests
         await svc.SetVotingStateAsync(false);
 
         // Act
-        var result = await svc.CastVoteAsync(presentation.Id, 1, null);
+        var result = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
 
         // Assert
         result.Should().BeFalse();

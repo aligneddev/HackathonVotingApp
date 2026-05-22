@@ -1,8 +1,14 @@
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
 
 export const votingApi = {
-  castVote: async (presentationId: string, ranking?: number, notes?: string): Promise<void> => {
+  castVote: async (
+    presentationId: string,
+    voterName: string,
+    ranking?: number,
+    notes?: string
+  ): Promise<void> => {
     const body: Record<string, unknown> = {};
+    body.voterName = voterName;
     if (ranking !== undefined) body.ranking = ranking;
     if (notes !== undefined) body.notes = notes;
 
