@@ -108,7 +108,7 @@ had to make several fixes, including api route, EF Migrations
 - [ ] Secure Admin
 - [ ] Admin - Start/End voting
 - [ ] Admin - edit presentation details
-- [ ] Admin - view votes and results, ranking (show vote counts, average ranking, order ascending by the average ranking, dialog for feedback people entered)
+- [X] Admin - view votes and results, ranking (show vote counts, average ranking, order ascending by the average ranking, dialog for feedback people entered)
 - [ ] Add some voting animations and fun visuals
 - [X] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests

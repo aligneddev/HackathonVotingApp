@@ -233,6 +233,53 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         result.Notes[1].Notes.Should().Be("Loved the clarity");
     }
 
+    [Fact]
+    public async Task GetVotingState_ReturnsCurrentState()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+
+        // Act
+        var response = await client.GetAsync("/admin/voting-state");
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        var body = await response.Content.ReadFromJsonAsync<VotingStateResponse>();
+        body.Should().NotBeNull();
+        body!.IsOpen.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task EndVoting_ThenCastVote_Returns403Forbidden()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationId = await SeedPresentationAsync(client);
+        await client.PostAsync("/admin/voting/end", null);
+
+        // Act
+        var voteResponse = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+
+        // Assert
+        voteResponse.StatusCode.Should().Be(HttpStatusCode.Forbidden);
+    }
+
+    [Fact]
+    public async Task StartVoting_AfterEndVoting_AllowsCastVote()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out _);
+        var presentationId = await SeedPresentationAsync(client);
+        await client.PostAsync("/admin/voting/end", null);
+        await client.PostAsync("/admin/voting/start", null);
+
+        // Act
+        var voteResponse = await client.PostAsJsonAsync($"/votes/{presentationId}", new { ranking = 1, notes = (string?)null });
+
+        // Assert
+        voteResponse.StatusCode.Should().Be(HttpStatusCode.Created);
+    }
+
     // Local DTOs for deserialization
     private record PresentationResponseDto(
         Guid Id,
@@ -254,4 +301,6 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     );
 
     private record AdminVoteNoteResponse(string Notes, int Ranking, DateTimeOffset CreatedAt);
+
+    private record VotingStateResponse(bool IsOpen, DateTimeOffset UpdatedAt);
 }

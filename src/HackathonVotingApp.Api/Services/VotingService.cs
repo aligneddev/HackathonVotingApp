@@ -6,8 +6,24 @@ namespace HackathonVotingApp.Api.Services;
 
 public class VotingService(AppDbContext db) : IVotingService
 {
+    private async Task<VotingState> GetOrCreateVotingStateAsync()
+    {
+        var state = await db.VotingStates.SingleOrDefaultAsync(v => v.Id == 1);
+        if (state is not null)
+            return state;
+
+        state = new VotingState { Id = 1, IsOpen = true, UpdatedAt = DateTimeOffset.UtcNow };
+        db.VotingStates.Add(state);
+        await db.SaveChangesAsync();
+        return state;
+    }
+
     public async Task<bool> CastVoteAsync(Guid presentationId, int ranking, string? notes)
     {
+        var votingState = await GetOrCreateVotingStateAsync();
+        if (!votingState.IsOpen)
+            return false;
+
         var presentationExists = await db.Presentations.AnyAsync(p => p.Id == presentationId);
         if (!presentationExists)
             return false;
@@ -77,5 +93,20 @@ public class VotingService(AppDbContext db) : IVotingService
                 )
             )
             .ToList();
+    }
+
+    public async Task<VotingStateResponse> GetVotingStateAsync()
+    {
+        var state = await GetOrCreateVotingStateAsync();
+        return new VotingStateResponse(state.IsOpen, state.UpdatedAt);
+    }
+
+    public async Task<VotingStateResponse> SetVotingStateAsync(bool isOpen)
+    {
+        var state = await GetOrCreateVotingStateAsync();
+        state.IsOpen = isOpen;
+        state.UpdatedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+        return new VotingStateResponse(state.IsOpen, state.UpdatedAt);
     }
 }

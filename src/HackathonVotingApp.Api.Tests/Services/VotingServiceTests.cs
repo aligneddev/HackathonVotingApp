@@ -119,4 +119,34 @@ public class VotingServiceTests
         // Assert
         count.Should().Be(0);
     }
+
+    [Fact]
+    public async Task GetVotingStateAsync_DefaultsToOpen()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var svc = new VotingService(db);
+
+        // Act
+        var state = await svc.GetVotingStateAsync();
+
+        // Assert
+        state.IsOpen.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task SetVotingStateAsync_WhenClosed_PreventsVotes()
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var presentation = await SeedPresentationAsync(db);
+        var svc = new VotingService(db);
+        await svc.SetVotingStateAsync(false);
+
+        // Act
+        var result = await svc.CastVoteAsync(presentation.Id, 1, null);
+
+        // Assert
+        result.Should().BeFalse();
+    }
 }

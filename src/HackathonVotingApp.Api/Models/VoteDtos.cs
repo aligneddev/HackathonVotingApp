@@ -16,3 +16,5 @@ public record AdminVoteResultResponse(
 	double? AverageRanking,
 	IReadOnlyList<VoteNoteResponse> Notes
 );
+
+public record VotingStateResponse(bool IsOpen, DateTimeOffset UpdatedAt);

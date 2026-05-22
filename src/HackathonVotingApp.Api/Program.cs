@@ -3,7 +3,8 @@ using HackathonVotingApp.Api.Services;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
-var configuredOrigins = builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
+var configuredOrigins =
+    builder.Configuration.GetSection("Cors:AllowedOrigins").Get<string[]>() ?? [];
 var allowedOrigins = configuredOrigins
     .Where(origin => !string.IsNullOrWhiteSpace(origin))
     .Select(origin => origin.Trim())
@@ -31,13 +32,13 @@ builder.Services.AddEndpointsApiExplorer();
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (!string.IsNullOrEmpty(sqlConnectionString))
 {
-    builder.Services.AddDbContext<AppDbContext>(opt =>
-        opt.UseSqlServer(sqlConnectionString));
+    builder.Services.AddDbContext<AppDbContext>(opt => opt.UseSqlServer(sqlConnectionString));
 }
 else
 {
     builder.Services.AddDbContext<AppDbContext>(opt =>
-        opt.UseInMemoryDatabase("HackathonVotingApp"));
+        opt.UseInMemoryDatabase("HackathonVotingApp")
+    );
 }
 
 builder.Services.AddScoped<IPresentationService, PresentationService>();
@@ -69,7 +70,10 @@ presentations.MapGet(
 
 presentations.MapPost(
     "/",
-    async (HackathonVotingApp.Api.Models.CreatePresentationRequest request, IPresentationService service) =>
+    async (
+        HackathonVotingApp.Api.Models.CreatePresentationRequest request,
+        IPresentationService service
+    ) =>
     {
         var result = await service.CreateAsync(request);
         return Results.Created($"/presentations/{result.Id}", result);
@@ -87,7 +91,11 @@ presentations.MapGet(
 
 presentations.MapPut(
     "/{id:guid}",
-    async (Guid id, HackathonVotingApp.Api.Models.UpdatePresentationRequest request, IPresentationService service) =>
+    async (
+        Guid id,
+        HackathonVotingApp.Api.Models.UpdatePresentationRequest request,
+        IPresentationService service
+    ) =>
     {
         var result = await service.UpdateAsync(id, request);
         return result is null ? Results.NotFound() : Results.Ok(result);
@@ -107,8 +115,17 @@ var votes = app.MapGroup("/votes");
 
 votes.MapPost(
     "/{presentationId:guid}",
-    async (Guid presentationId, HackathonVotingApp.Api.Models.CastVoteRequest request, IVotingService votingService, HttpContext httpContext) =>
+    async (
+        Guid presentationId,
+        HackathonVotingApp.Api.Models.CastVoteRequest request,
+        IVotingService votingService,
+        HttpContext httpContext
+    ) =>
     {
+        var votingState = await votingService.GetVotingStateAsync();
+        if (!votingState.IsOpen)
+            return Results.StatusCode(StatusCodes.Status403Forbidden);
+
         var cookieKey = $"hackathon-voted-{presentationId}";
         if (httpContext.Request.Cookies.ContainsKey(cookieKey))
             return Results.Conflict();
@@ -116,7 +133,11 @@ votes.MapPost(
         if (request.Ranking < 1 || request.Ranking > 5)
             return Results.BadRequest(new { error = "Ranking must be between 1 and 5." });
 
-        var success = await votingService.CastVoteAsync(presentationId, request.Ranking, request.Notes);
+        var success = await votingService.CastVoteAsync(
+            presentationId,
+            request.Ranking,
+            request.Notes
+        );
         if (!success)
             return Results.NotFound();
 
@@ -131,7 +152,11 @@ votes.MapPost(
 
 votes.MapGet(
     "/{presentationId:guid}/count",
-    async (Guid presentationId, IPresentationService presentationService, IVotingService votingService) =>
+    async (
+        Guid presentationId,
+        IPresentationService presentationService,
+        IVotingService votingService
+    ) =>
     {
         var presentation = await presentationService.GetByIdAsync(presentationId);
         if (presentation is null)
@@ -142,13 +167,34 @@ votes.MapGet(
     }
 );
 
-app.MapGet("/leaderboard", async (ILeaderboardService svc) =>
-    Results.Ok(await svc.GetLeaderboardAsync()));
+app.MapGet(
+    "/leaderboard",
+    async (ILeaderboardService svc) => Results.Ok(await svc.GetLeaderboardAsync())
+);
 
 var admin = app.MapGroup("/admin");
 
-admin.MapGet("/results", async (IVotingService votingService) =>
-    Results.Ok(await votingService.GetAdminResultsAsync()));
+admin.MapGet(
+    "/results",
+    async (IVotingService votingService) => Results.Ok(await votingService.GetAdminResultsAsync())
+);
+
+admin.MapGet(
+    "/voting-state",
+    async (IVotingService votingService) => Results.Ok(await votingService.GetVotingStateAsync())
+);
+
+admin.MapPost(
+    "/voting/start",
+    async (IVotingService votingService) =>
+        Results.Ok(await votingService.SetVotingStateAsync(true))
+);
+
+admin.MapPost(
+    "/voting/end",
+    async (IVotingService votingService) =>
+        Results.Ok(await votingService.SetVotingStateAsync(false))
+);
 
 app.Run();
 

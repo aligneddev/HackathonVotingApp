@@ -1,21 +1,39 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { presentationApi, Presentation } from '../api/presentationApi';
+import { adminVotingApi, VotingState } from '../api/adminVotingApi';
 
 export default function AdminPage() {
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [loading, setLoading] = useState(true);
   const [showForm, setShowForm] = useState(false);
   const [form, setForm] = useState({ title: '', presenterName: '', description: '' });
+  const [votingState, setVotingState] = useState<VotingState | null>(null);
+  const [isUpdatingVotingState, setIsUpdatingVotingState] = useState(false);
 
   useEffect(() => {
-    presentationApi.getPresentations()
-      .then(data => {
-        setPresentations(data);
+    Promise.all([presentationApi.getPresentations(), adminVotingApi.getVotingState()])
+      .then(([presentationData, state]) => {
+        setPresentations(presentationData);
+        setVotingState(state);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const handleSetVotingState = async (isOpen: boolean) => {
+    if (isUpdatingVotingState) return;
+
+    setIsUpdatingVotingState(true);
+    try {
+      const state = isOpen
+        ? await adminVotingApi.startVoting()
+        : await adminVotingApi.endVoting();
+      setVotingState(state);
+    } finally {
+      setIsUpdatingVotingState(false);
+    }
+  };
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -58,6 +76,38 @@ export default function AdminPage() {
             </button>
           </div>
         </div>
+
+        <section className="bg-gray-900 border border-gray-700 rounded-xl p-5 mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h2 className="text-base font-semibold text-gray-100">Voting Session</h2>
+              <p className="text-sm text-gray-400 mt-1">
+                Status:{' '}
+                <span className={votingState?.isOpen ? 'text-green-400 font-medium' : 'text-red-400 font-medium'}>
+                  {votingState?.isOpen ? 'Open' : 'Closed'}
+                </span>
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={() => handleSetVotingState(true)}
+                disabled={isUpdatingVotingState || votingState?.isOpen === true}
+                className="bg-green-700 hover:bg-green-600 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                Start Voting
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSetVotingState(false)}
+                disabled={isUpdatingVotingState || votingState?.isOpen === false}
+                className="bg-red-700 hover:bg-red-600 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+              >
+                End Voting
+              </button>
+            </div>
+          </div>
+        </section>
 
         {showForm && (
           <form
