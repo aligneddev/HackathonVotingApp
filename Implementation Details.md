@@ -105,13 +105,14 @@ had to make several fixes, including api route, EF Migrations
 - [ ] More presentation details for submission
 - [ ] Omnitech presentation submission - sudo auth
 - [X] Voting - enter notes and feedback on each one, rank 1 through 5
-- [ ] Secure Admin
-- [ ] Admin - Start/End voting
+- [ ] Secure Admin - sudo auth (saved hashed username and password) to access admin features
+- [X] Admin - Start/End voting
 - [ ] Admin - edit presentation details
 - [X] Admin - view votes and results, ranking (show vote counts, average ranking, order ascending by the average ranking, dialog for feedback people entered)
 - [ ] Add some voting animations and fun visuals
 - [X] Deploy to Azure with the bicep files
 - [ ] Integration/Acceptance Tests
 - [ ] Aspirify
-- [ ] Switch to Managed Identity
-- [ ] Tie login to a sudo user in the database or at least 
+- [ ] Switch to Managed Identity for ressources
+- [X] Tie login to a sudo user in the database or at least  - name, don't game the system
+- [ ] Admin menu

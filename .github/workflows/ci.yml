@@ -17,7 +17,7 @@ jobs:
     name: .NET API — Build & Test
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup .NET 10
         uses: actions/setup-dotnet@v4
@@ -55,10 +55,10 @@ jobs:
       run:
         working-directory: src/frontend
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Setup Node.js 22
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v5
         with:
           node-version: '22'
           cache: 'npm'
@@ -87,7 +87,7 @@ jobs:
       staticWebAppName: ${{ steps.deploy.outputs.staticWebAppName }}
       apiUrl: ${{ steps.deploy.outputs.apiUrl }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Azure Login (OIDC)
         uses: azure/login@v2
@@ -140,7 +140,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Deploy to Static Web Apps
         uses: Azure/static-web-apps-deploy@v1
