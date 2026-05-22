@@ -18,13 +18,8 @@ vi.mock('../api/adminVotingApi', () => ({
   },
 }));
 
-const mockPresentationApi = presentationApiModule.presentationApi as {
-  getPresentations: ReturnType<typeof vi.fn>;
-};
-
-const mockVotingApi = adminVotingApiModule.adminVotingApi as {
-  getVotingState: ReturnType<typeof vi.fn>;
-};
+const mockGetPresentations = vi.mocked(presentationApiModule.presentationApi.getPresentations);
+const mockGetVotingState = vi.mocked(adminVotingApiModule.adminVotingApi.getVotingState);
 
 describe('VotingPage', () => {
   beforeEach(() => {
@@ -33,7 +28,7 @@ describe('VotingPage', () => {
   });
 
   it('shows_closed_message_when_voting_is_not_open', async () => {
-    mockPresentationApi.getPresentations.mockResolvedValueOnce([
+    mockGetPresentations.mockResolvedValueOnce([
       {
         id: 'p-1',
         title: 'Demo',
@@ -42,7 +37,7 @@ describe('VotingPage', () => {
         createdAt: new Date().toISOString(),
       },
     ]);
-    mockVotingApi.getVotingState.mockResolvedValueOnce({
+    mockGetVotingState.mockResolvedValueOnce({
       isOpen: false,
       updatedAt: new Date().toISOString(),
     });
