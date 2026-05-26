@@ -27,7 +27,7 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
         {
             Id = 1,
             CurrentSessionId = 1,
-            IsOpen = true,
+            IsOpen = false,
             UpdatedAt = DateTimeOffset.UtcNow,
         };
 

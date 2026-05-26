@@ -6,35 +6,6 @@ describe('votingApi', () => {
     vi.restoreAllMocks();
   });
 
-  it('castVote_calls_POST_votes_with_presentationId', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(null, { status: 201 })
-    );
-    vi.stubGlobal('fetch', mockFetch);
-
-    await votingApi.castVote('abc-123', 'Ada Lovelace');
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/votes/abc-123',
-      expect.objectContaining({ method: 'POST' })
-    );
-  });
-
-  it('getVoteCount_calls_GET_votes_count_and_returns_number', async () => {
-    const mockFetch = vi.fn().mockResolvedValueOnce(
-      new Response(JSON.stringify({ count: 5 }), { status: 200 })
-    );
-    vi.stubGlobal('fetch', mockFetch);
-
-    const count = await votingApi.getVoteCount('abc-123');
-
-    expect(mockFetch).toHaveBeenCalledWith(
-      '/api/votes/abc-123/count',
-      expect.anything()
-    );
-    expect(count).toBe(5);
-  });
-
   it('castBallot_calls_POST_votes_ballots', async () => {
     const mockFetch = vi.fn().mockResolvedValueOnce(
       new Response(null, { status: 201 })
@@ -48,7 +19,25 @@ describe('votingApi', () => {
 
     expect(mockFetch).toHaveBeenCalledWith(
       '/api/votes/ballots',
-      expect.objectContaining({ method: 'POST' })
+      expect.objectContaining({
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          voterAliasToken: 'Ada Lovelace',
+          entries: [
+            { presentationId: 'p-1', ranking: 1 },
+            { presentationId: 'p-2', ranking: 2 },
+          ],
+        }),
+      })
     );
+  });
+
+  it('castBallot_throws_for_non_ok_response', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValueOnce(new Response(null, { status: 400 })));
+
+    await expect(
+      votingApi.castBallot('Ada Lovelace', [{ presentationId: 'p-1', ranking: 1 }])
+    ).rejects.toThrow(/failed to submit ballot: 400/i);
   });
 });

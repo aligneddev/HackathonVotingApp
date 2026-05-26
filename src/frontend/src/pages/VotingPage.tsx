@@ -16,7 +16,7 @@ export default function VotingPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isVotingOpen, setIsVotingOpen] = useState(true);
-  const [voterName, setVoterName] = useState('');
+  const [voterAliasToken, setVoterAliasToken] = useState('');
 
   const requiredRankCount = Math.min(5, rankedItems.length);
 
@@ -39,8 +39,8 @@ export default function VotingPage() {
       return;
     }
 
-    if (!voterName.trim()) {
-      setError('Please enter your name before submitting.');
+    if (!voterAliasToken.trim()) {
+      setError('Please enter your voter alias before submitting.');
       return;
     }
 
@@ -55,7 +55,7 @@ export default function VotingPage() {
         notes: item.notes || undefined,
       }));
 
-      await votingApi.castBallot(voterName.trim(), entries);
+      await votingApi.castBallot(voterAliasToken.trim(), entries);
       localStorage.setItem(getSessionKey(rankedItems.map(r => r.presentation)), 'true');
       setSubmitted(true);
     } catch (err) {
@@ -105,7 +105,7 @@ export default function VotingPage() {
           {' '}Add optional notes for each.
         </p>
         <p className="text-amber-300 text-sm mb-4">
-          Please use your real name and only vote once.
+          Enter a voter alias (8–12 alphanumeric characters, at least one digit, e.g. ALICE007). Use the same alias if you need to re-enter.
         </p>
 
         {loading ? (
@@ -128,17 +128,17 @@ export default function VotingPage() {
         ) : (
           <>
             <div className="mb-4">
-              <label htmlFor="voter-name" className="block text-sm font-medium text-gray-200 mb-1">
-                Your name
+              <label htmlFor="voter-alias" className="block text-sm font-medium text-gray-200 mb-1">
+                Voter alias
               </label>
               <input
-                id="voter-name"
+                id="voter-alias"
                 type="text"
-                value={voterName}
-                onChange={e => setVoterName(e.target.value)}
-                maxLength={120}
+                value={voterAliasToken}
+                onChange={e => setVoterAliasToken(e.target.value)}
+                maxLength={12}
                 disabled={submitting}
-                placeholder="Enter your real name"
+                placeholder="e.g. ALICE007"
                 className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>

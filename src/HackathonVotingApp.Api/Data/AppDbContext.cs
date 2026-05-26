@@ -14,8 +14,8 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
         base.OnModelCreating(modelBuilder);
         modelBuilder.Entity<VotingState>().Property(v => v.Id).ValueGeneratedNever();
 
-        modelBuilder.Entity<Vote>().Property(v => v.NormalizedVoterName).HasMaxLength(120);
-        modelBuilder.Entity<Vote>().HasIndex(v => new { v.SessionId, v.NormalizedVoterName });
+        modelBuilder.Entity<Vote>().Property(v => v.NormalizedVoterAliasToken).HasMaxLength(12);
+        modelBuilder.Entity<Vote>().HasIndex(v => new { v.SessionId, v.NormalizedVoterAliasToken });
         modelBuilder.Entity<Vote>().HasIndex(v => new { v.SessionId, v.PresentationId });
     }
 }

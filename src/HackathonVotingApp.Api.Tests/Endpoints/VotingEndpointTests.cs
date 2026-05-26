@@ -85,85 +85,16 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task CastVote_WithValidPresentationId_Returns201Created()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var presentationId = await SeedPresentationAsync(client);
-
-        // Act
-        var response = await client.PostAsJsonAsync(
-            $"/api/votes/{presentationId}",
-            new
-            {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
-            }
-        );
-
-        // Assert — expects 201 once implemented
-        response.StatusCode.Should().Be(HttpStatusCode.Created);
-    }
-
-    [Fact]
-    public async Task CastVote_WithNonExistentPresentationId_Returns404NotFound()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var nonExistentId = Guid.NewGuid();
-
-        // Act
-        var response = await client.PostAsJsonAsync(
-            $"/api/votes/{nonExistentId}",
-            new
-            {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
-            }
-        );
-
-        // Assert — expects 404 (presentation not found) once implemented
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task CastVote_WhenAlreadyVoted_Returns409Conflict()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var presentationId = await SeedPresentationAsync(client);
-
-        // Send request with the dedup cookie already set (simulates a browser that already voted)
-        var requestMsg = new HttpRequestMessage(HttpMethod.Post, $"/api/votes/{presentationId}");
-        requestMsg.Headers.Add("Cookie", $"hackathon-voted-{presentationId}=true");
-        requestMsg.Content = JsonContent.Create(
-            new
-            {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
-            }
-        );
-
-        // Act
-        var response = await client.SendAsync(requestMsg);
-
-        // Assert — expects 409 once implemented
-        response.StatusCode.Should().Be(HttpStatusCode.Conflict);
-    }
-
-    [Fact]
     public async Task SubmitBallot_WithCompleteTopFiveEntries_Returns201Created()
     {
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await client.PostAsync("/api/admin/voting/start", null);
 
         var payload = new
         {
-            voterName = "Alice",
+            voterAliasToken = "ALICE001",
             entries = new[]
             {
                 new
@@ -212,10 +143,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await client.PostAsync("/api/admin/voting/start", null);
 
         var payload = new
         {
-            voterName = "Alice",
+            voterAliasToken = "ALICE001",
             entries = new[]
             {
                 new
@@ -258,10 +190,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await client.PostAsync("/api/admin/voting/start", null);
 
         var firstPayload = new
         {
-            voterName = "Alice",
+            voterAliasToken = "ALICE001",
             entries = new[]
             {
                 new
@@ -299,7 +232,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         var secondPayload = new
         {
-            voterName = " alice ",
+            voterAliasToken = " alice001 ",
             entries = new[]
             {
                 new
@@ -354,7 +287,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         var payload = new
         {
-            voterName = "Alice",
+            voterAliasToken = "ALICE001",
             entries = new[]
             {
                 new
@@ -403,10 +336,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 3);
+        await client.PostAsync("/api/admin/voting/start", null);
 
         var incompletePayload = new
         {
-            voterName = "Alice",
+            voterAliasToken = "ALICE001",
             entries = new[]
             {
                 new
@@ -429,62 +363,6 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
-    }
-
-    [Fact]
-    public async Task GetVoteCount_WithValidPresentationId_Returns200WithCount()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var presentationId = await SeedPresentationAsync(client);
-
-        // Act — route GET /votes/{presentationId}/count does not exist yet
-        var response = await client.GetAsync($"/api/votes/{presentationId}/count");
-
-        // Assert — expects 200 with { "count": 0 } once implemented
-        response.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await response.Content.ReadFromJsonAsync<VoteCountResponse>();
-        body.Should().NotBeNull();
-        body!.Count.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task GetVoteCount_WithNonExistentPresentationId_Returns404NotFound()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var nonExistentId = Guid.NewGuid();
-
-        // Act — route does not exist yet
-        var response = await client.GetAsync($"/api/votes/{nonExistentId}/count");
-
-        // Assert — expects 404 (presentation not found) once implemented
-        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
-    }
-
-    [Fact]
-    public async Task CastVote_IncreasesVoteCountByOne()
-    {
-        // Arrange
-        var client = CreateClientWithFreshDb(out _);
-        var presentationId = await SeedPresentationAsync(client);
-
-        // Act — cast one vote, then check count
-        await client.PostAsJsonAsync(
-            $"/api/votes/{presentationId}",
-            new
-            {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
-            }
-        );
-        var countResponse = await client.GetAsync($"/api/votes/{presentationId}/count");
-
-        // Assert — expects count to be 1 after one successful vote
-        countResponse.StatusCode.Should().Be(HttpStatusCode.OK);
-        var body = await countResponse.Content.ReadFromJsonAsync<VoteCountResponse>();
-        body!.Count.Should().Be(1);
     }
 
     [Fact]
@@ -588,11 +466,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         response.StatusCode.Should().Be(HttpStatusCode.OK);
         var body = await response.Content.ReadFromJsonAsync<VotingStateResponse>();
         body.Should().NotBeNull();
-        body!.IsOpen.Should().BeTrue();
+        body!.IsOpen.Should().BeFalse();
     }
 
     [Fact]
-    public async Task EndVoting_ThenCastVote_Returns403Forbidden()
+    public async Task EndVoting_ThenSubmitBallot_Returns403Forbidden()
     {
         // Arrange
         var client = CreateClientWithFreshDb(out _);
@@ -601,12 +479,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Act
         var voteResponse = await client.PostAsJsonAsync(
-            $"/api/votes/{presentationId}",
+            "/api/votes/ballots",
             new
             {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
+                voterAliasToken = "ALICE001",
+                entries = new[] { new { presentationId, ranking = 1, notes = (string?)null } },
             }
         );
 
@@ -615,7 +492,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     }
 
     [Fact]
-    public async Task StartVoting_AfterEndVoting_AllowsCastVote()
+    public async Task StartVoting_AfterEndVoting_AllowsBallotSubmission()
     {
         // Arrange
         var client = CreateClientWithFreshDb(out _);
@@ -625,12 +502,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
 
         // Act
         var voteResponse = await client.PostAsJsonAsync(
-            $"/api/votes/{presentationId}",
+            "/api/votes/ballots",
             new
             {
-                voterName = "Alice",
-                ranking = 1,
-                notes = (string?)null,
+                voterAliasToken = "ALICE001",
+                entries = new[] { new { presentationId, ranking = 1, notes = (string?)null } },
             }
         );
 
@@ -646,8 +522,6 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         string Description,
         DateTimeOffset CreatedAt
     );
-
-    private record VoteCountResponse(int Count);
 
     private record AdminResultResponse(
         Guid Id,

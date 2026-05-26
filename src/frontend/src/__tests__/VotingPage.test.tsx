@@ -22,9 +22,7 @@ vi.mock('../api/adminVotingApi', () => ({
 
 vi.mock('../api/votingApi', () => ({
   votingApi: {
-    castVote: vi.fn(),
     castBallot: vi.fn(),
-    getVoteCount: vi.fn(),
   },
 }));
 
@@ -85,7 +83,7 @@ describe('VotingPage', () => {
 
     render(<VotingPage />);
 
-    const nameInput = await screen.findByLabelText(/your name/i);
+    const nameInput = await screen.findByLabelText(/voter alias/i);
     await user.type(nameInput, 'Ada Lovelace');
     await user.click(screen.getByRole('button', { name: /submit rankings/i }));
 

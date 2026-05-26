@@ -138,67 +138,6 @@ votes.MapPost(
     }
 );
 
-votes.MapPost(
-    "/{presentationId:guid}",
-    async (
-        Guid presentationId,
-        HackathonVotingApp.Api.Models.CastVoteRequest request,
-        IVotingService votingService,
-        HttpContext httpContext
-    ) =>
-    {
-        var votingState = await votingService.GetVotingStateAsync();
-        if (!votingState.IsOpen)
-            return Results.StatusCode(StatusCodes.Status403Forbidden);
-
-        var cookieKey = $"hackathon-voted-{presentationId}";
-        if (httpContext.Request.Cookies.ContainsKey(cookieKey))
-            return Results.Conflict();
-
-        if (request.Ranking < 1 || request.Ranking > 5)
-            return Results.BadRequest(new { error = "Ranking must be between 1 and 5." });
-
-        var voterName = request.VoterName?.Trim();
-        if (string.IsNullOrWhiteSpace(voterName))
-            return Results.BadRequest(new { error = "Name is required." });
-
-        if (voterName.Length > 120)
-            return Results.BadRequest(new { error = "Name must be 120 characters or fewer." });
-
-        var success = await votingService.CastVoteAsync(
-            presentationId,
-            voterName,
-            request.Ranking,
-            request.Notes
-        );
-        if (!success)
-            return Results.NotFound();
-
-        httpContext.Response.Cookies.Append(
-            cookieKey,
-            "true",
-            new CookieOptions { MaxAge = TimeSpan.FromDays(365) }
-        );
-        return Results.Created($"/votes/{presentationId}", null);
-    }
-);
-
-votes.MapGet(
-    "/{presentationId:guid}/count",
-    async (
-        Guid presentationId,
-        IPresentationService presentationService,
-        IVotingService votingService
-    ) =>
-    {
-        var presentation = await presentationService.GetByIdAsync(presentationId);
-        if (presentation is null)
-            return Results.NotFound();
-
-        var count = await votingService.GetVoteCountAsync(presentationId);
-        return Results.Ok(new { count });
-    }
-);
 
 app.MapGet(
     "/api/leaderboard",

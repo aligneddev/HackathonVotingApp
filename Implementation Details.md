@@ -115,10 +115,13 @@ had to make several fixes, including api route, EF Migrations
 - [ ] Aspirify
 - [ ] Switch to Managed Identity for ressources
 - [X] Tie login to a sudo user in the database or at least  - name, don't game the system
-- [ ] Admin menu
+- [X] Admin menu
+- [] Does it actually save?
+
 - [ ] Determine a winner (after /grill-me)
 
-
+/grill-with-docs is eating tokens fast! up 10% 
+CLI doesn't seem a lot better as it was implementing and grilling at the same time
 
 ## Determine a winner (after /grill-me)
     Finalized rules (2026-05-22):

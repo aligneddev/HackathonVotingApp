@@ -25,103 +25,10 @@ public class VotingServiceTests
         return presentation;
     }
 
-    // --- CastVoteAsync ---
+    // --- SetVotingStateAsync ---
 
     [Fact]
-    public async Task CastVoteAsync_WithValidPresentationId_ReturnsTrue()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var presentation = await SeedPresentationAsync(db);
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException (red)
-        var result = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
-
-        // Assert
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task CastVoteAsync_WithNonExistentPresentationId_ReturnsFalse()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException (red)
-        var result = await svc.CastVoteAsync(Guid.NewGuid(), "Alice", 1, null);
-
-        // Assert
-        result.Should().BeFalse();
-    }
-
-    [Fact]
-    public async Task CastVoteAsync_WhenCalledTwiceForSamePresentationId_ReturnsFalseSecondTime()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var presentation = await SeedPresentationAsync(db);
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException on first call (red)
-        var firstResult = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
-        var secondResult = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
-
-        // Assert — first succeeds, second is duplicate and returns false
-        firstResult.Should().BeTrue();
-        secondResult.Should().BeFalse();
-    }
-
-    // --- GetVoteCountAsync ---
-
-    [Fact]
-    public async Task GetVoteCountAsync_WithNoVotes_ReturnsZero()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var presentation = await SeedPresentationAsync(db);
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException (red)
-        var count = await svc.GetVoteCountAsync(presentation.Id);
-
-        // Assert
-        count.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task GetVoteCountAsync_AfterOneVote_ReturnsOne()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var presentation = await SeedPresentationAsync(db);
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException (red)
-        await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
-        var count = await svc.GetVoteCountAsync(presentation.Id);
-
-        // Assert
-        count.Should().Be(1);
-    }
-
-    [Fact]
-    public async Task GetVoteCountAsync_WithNonExistentPresentationId_ReturnsZero()
-    {
-        // Arrange
-        await using var db = CreateDb();
-        var svc = new VotingService(db);
-
-        // Act — will throw NotImplementedException (red)
-        var count = await svc.GetVoteCountAsync(Guid.NewGuid());
-
-        // Assert
-        count.Should().Be(0);
-    }
-
-    [Fact]
-    public async Task GetVotingStateAsync_DefaultsToOpen()
+    public async Task GetVotingStateAsync_DefaultsToClosed()
     {
         // Arrange
         await using var db = CreateDb();
@@ -131,11 +38,11 @@ public class VotingServiceTests
         var state = await svc.GetVotingStateAsync();
 
         // Assert
-        state.IsOpen.Should().BeTrue();
+        state.IsOpen.Should().BeFalse();
     }
 
     [Fact]
-    public async Task SetVotingStateAsync_WhenClosed_PreventsVotes()
+    public async Task SetVotingStateAsync_WhenClosed_PreventsBallotSubmission()
     {
         // Arrange
         await using var db = CreateDb();
@@ -143,11 +50,70 @@ public class VotingServiceTests
         var svc = new VotingService(db);
         await svc.SetVotingStateAsync(false);
 
+        var request = new SubmitBallotRequest(
+            "ALICE001",
+            [new BallotEntryRequest(presentation.Id, 1, null)]
+        );
+
         // Act
-        var result = await svc.CastVoteAsync(presentation.Id, "Alice", 1, null);
+        var result = await svc.SubmitBallotAsync(request);
 
         // Assert
-        result.Should().BeFalse();
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(SubmitBallotError.VotingClosed);
+    }
+
+    // --- SubmitBallotAsync token validation ---
+
+    [Theory]
+    [InlineData("SHORT1")]          // too short (6)
+    [InlineData("TOOLONGTOKEN123")] // too long (15)
+    [InlineData("NOODIGITS")]       // no digit (9 chars, but no digit)
+    [InlineData("ALICE 01")]        // space is invalid character
+    [InlineData("ALICE-01")]        // hyphen is invalid
+    [InlineData("AAAAAAAA")]        // all same character
+    [InlineData("12345678")]        // ascending sequential digits
+    [InlineData("87654321")]        // descending sequential digits
+    public async Task SubmitBallotAsync_WithInvalidToken_ReturnsInvalidVoter(string token)
+    {
+        // Arrange
+        await using var db = CreateDb();
+        await SeedPresentationAsync(db);
+        var svc = new VotingService(db);
+        await svc.SetVotingStateAsync(true);
+        var request = new SubmitBallotRequest(token, []);
+
+        // Act
+        var result = await svc.SubmitBallotAsync(request);
+
+        // Assert
+        result.Success.Should().BeFalse();
+        result.Error.Should().Be(SubmitBallotError.InvalidVoter);
+    }
+
+    [Theory]
+    [InlineData("ALICE001")]        // 8 chars, ≥1 digit
+    [InlineData("alice001")]        // lowercase normalized to valid
+    [InlineData("ABCDE12345")]      // 10 chars
+    [InlineData("Z9Z9Z9Z9Z9Z9")]   // 12 chars (max)
+    [InlineData("12345670")]        // digits but not sequential
+    public async Task SubmitBallotAsync_WithValidToken_ReturnsSuccess(string token)
+    {
+        // Arrange
+        await using var db = CreateDb();
+        var presentation = await SeedPresentationAsync(db);
+        var svc = new VotingService(db);
+        await svc.SetVotingStateAsync(true);
+        var request = new SubmitBallotRequest(
+            token,
+            [new BallotEntryRequest(presentation.Id, 1, null)]
+        );
+
+        // Act
+        var result = await svc.SubmitBallotAsync(request);
+
+        // Assert
+        result.Success.Should().BeTrue();
     }
 
     [Fact]
@@ -162,19 +128,19 @@ public class VotingServiceTests
             new Vote
             {
                 PresentationId = p1.Id,
-                VoterName = "A",
+                VoterAliasToken = "A",
                 Ranking = 1,
             }, // 8 points
             new Vote
             {
                 PresentationId = p2.Id,
-                VoterName = "B",
+                VoterAliasToken = "B",
                 Ranking = 2,
             }, // 5 points
             new Vote
             {
                 PresentationId = p2.Id,
-                VoterName = "C",
+                VoterAliasToken = "C",
                 Ranking = 2,
             } // 5 points => 10 total
         );

@@ -6,8 +6,32 @@ namespace HackathonVotingApp.Api.Services;
 
 public class VotingService(AppDbContext db) : IVotingService
 {
-    private static string NormalizeVoterName(string voterName) =>
-        voterName.Trim().ToUpperInvariant();
+    private static string NormalizeToken(string token) =>
+        token.Trim().ToUpperInvariant();
+
+    private static bool IsValidToken(string normalized)
+    {
+        if (normalized.Length < 8 || normalized.Length > 12) return false;
+        if (!normalized.All(char.IsLetterOrDigit)) return false;
+        if (!normalized.Any(char.IsDigit)) return false;
+        return !IsWeakToken(normalized);
+    }
+
+    private static bool IsWeakToken(string normalized)
+    {
+        // All same character: AAAAAAAA, 11111111
+        if (normalized.Distinct().Count() == 1) return true;
+
+        // Purely sequential digit run: 12345678, 87654321
+        if (!normalized.All(char.IsDigit)) return false;
+        bool ascending = true, descending = true;
+        for (var i = 1; i < normalized.Length; i++)
+        {
+            if (normalized[i] - normalized[i - 1] != 1) ascending = false;
+            if (normalized[i - 1] - normalized[i] != 1) descending = false;
+        }
+        return ascending || descending;
+    }
 
     private static int GetPointsForRanking(int ranking) =>
         ranking switch
@@ -30,51 +54,12 @@ public class VotingService(AppDbContext db) : IVotingService
         {
             Id = 1,
             CurrentSessionId = 1,
-            IsOpen = true,
+            IsOpen = false,
             UpdatedAt = DateTimeOffset.UtcNow,
         };
         db.VotingStates.Add(state);
         await db.SaveChangesAsync();
         return state;
-    }
-
-    public async Task<bool> CastVoteAsync(
-        Guid presentationId,
-        string voterName,
-        int ranking,
-        string? notes
-    )
-    {
-        var votingState = await GetOrCreateVotingStateAsync();
-        if (!votingState.IsOpen)
-            return false;
-
-        var presentationExists = await db.Presentations.AnyAsync(p => p.Id == presentationId);
-        if (!presentationExists)
-            return false;
-
-        var normalizedVoterName = NormalizeVoterName(voterName);
-        var alreadyVoted = await db.Votes.AnyAsync(v =>
-            v.SessionId == votingState.CurrentSessionId
-            && v.PresentationId == presentationId
-            && v.NormalizedVoterName == normalizedVoterName
-        );
-        if (alreadyVoted)
-            return false;
-
-        db.Votes.Add(
-            new Vote
-            {
-                PresentationId = presentationId,
-                SessionId = votingState.CurrentSessionId,
-                VoterName = voterName.Trim(),
-                NormalizedVoterName = normalizedVoterName,
-                Ranking = ranking,
-                Notes = notes,
-            }
-        );
-        await db.SaveChangesAsync();
-        return true;
     }
 
     public async Task<SubmitBallotResult> SubmitBallotAsync(SubmitBallotRequest request)
@@ -83,8 +68,9 @@ public class VotingService(AppDbContext db) : IVotingService
         if (!votingState.IsOpen)
             return SubmitBallotResult.Failed(SubmitBallotError.VotingClosed);
 
-        var voterName = request.VoterName?.Trim();
-        if (string.IsNullOrWhiteSpace(voterName) || voterName.Length > 120)
+        var rawToken = request.VoterAliasToken?.Trim();
+        var normalizedToken = rawToken is null ? string.Empty : NormalizeToken(rawToken);
+        if (!IsValidToken(normalizedToken))
             return SubmitBallotResult.Failed(SubmitBallotError.InvalidVoter);
 
         var entries = request.Entries;
@@ -112,10 +98,9 @@ public class VotingService(AppDbContext db) : IVotingService
         if (ranks.Any(r => r < 1 || r > requiredRankCount) || !expectedRanks.SetEquals(ranks))
             return SubmitBallotResult.Failed(SubmitBallotError.InvalidBallot);
 
-        var normalizedVoterName = NormalizeVoterName(voterName);
         var alreadySubmitted = await db.Votes.AnyAsync(v =>
             v.SessionId == votingState.CurrentSessionId
-            && v.NormalizedVoterName == normalizedVoterName
+            && v.NormalizedVoterAliasToken == normalizedToken
         );
         if (alreadySubmitted)
             return SubmitBallotResult.Failed(SubmitBallotError.DuplicateBallot);
@@ -126,8 +111,8 @@ public class VotingService(AppDbContext db) : IVotingService
             {
                 PresentationId = entry.PresentationId,
                 SessionId = votingState.CurrentSessionId,
-                VoterName = voterName,
-                NormalizedVoterName = normalizedVoterName,
+                VoterAliasToken = normalizedToken,
+                NormalizedVoterAliasToken = normalizedToken,
                 Ranking = entry.Ranking,
                 Notes = entry.Notes,
                 CreatedAt = now,
@@ -136,14 +121,6 @@ public class VotingService(AppDbContext db) : IVotingService
 
         await db.SaveChangesAsync();
         return SubmitBallotResult.Ok();
-    }
-
-    public async Task<int> GetVoteCountAsync(Guid presentationId)
-    {
-        var votingState = await GetOrCreateVotingStateAsync();
-        return await db.Votes.CountAsync(v =>
-            v.SessionId == votingState.CurrentSessionId && v.PresentationId == presentationId
-        );
     }
 
     public async Task<IReadOnlyList<AdminVoteResultResponse>> GetAdminResultsAsync()

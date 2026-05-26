@@ -1,14 +1,8 @@
 namespace HackathonVotingApp.Api.Models;
 
-/// <summary>
-/// Request body for POST /votes/{presentationId}.
-/// Ranking must be 1–5 (voter's personal rank for this presentation).
-/// </summary>
-public record CastVoteRequest(string VoterName, int Ranking, string? Notes);
-
 public record BallotEntryRequest(Guid PresentationId, int Ranking, string? Notes);
 
-public record SubmitBallotRequest(string VoterName, IReadOnlyList<BallotEntryRequest> Entries);
+public record SubmitBallotRequest(string VoterAliasToken, IReadOnlyList<BallotEntryRequest> Entries);
 
 public enum SubmitBallotError
 {
