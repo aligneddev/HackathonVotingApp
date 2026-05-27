@@ -1,6 +1,10 @@
 targetScope = 'resourceGroup'
 
 param location string = resourceGroup().location
+@allowed([
+  'dev'
+  'prod'
+])
 param environmentName string = 'dev'
 param appName string = 'kl-hackathon-voting'
 

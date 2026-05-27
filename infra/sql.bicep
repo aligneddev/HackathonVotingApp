@@ -1,4 +1,8 @@
 param location string
+@allowed([
+  'dev'
+  'prod'
+])
 param environmentName string
 param appName string
 

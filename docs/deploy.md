@@ -1,8 +1,6 @@
 # Deployment Guide
 
-This document covers the one-time Azure setup, required GitHub secrets, and the first-deploy order of operations for HackathonVotingApp.
-
----
+This document covers Azure setup, GitHub secrets, and the dev/prod deployment flow for HackathonVotingApp.
 
 ## Architecture Overview
 
@@ -12,246 +10,176 @@ This document covers the one-time Azure setup, required GitHub secrets, and the 
 | .NET 10 API | Azure App Service (Linux) | F1 Free |
 | Database | Azure SQL Serverless (GP_S_Gen5_1) | ~$0 when idle |
 
-Deployment is fully automated via `.github/workflows/ci.yml`. Every push to `main` triggers: build → test → infra (Bicep) → API deploy → frontend deploy.
+Infrastructure is defined in Bicep and deployed through [.github/workflows/ci.yml](../.github/workflows/ci.yml).
 
----
+## Environment Model
+
+- Resource group: single shared resource group (`kl-hackathon-rg`)
+- Dev resource naming: `kl-hackathon-voting-dev-*`
+- Prod resource naming: `kl-hackathon-voting-prod-*`
+- `main` push behavior: automatically deploys dev only
+- Prod deployment: manual workflow dispatch with explicit confirmation input (`confirm_production=true`)
 
 ## Required GitHub Secrets
 
-Set these under **Settings → Secrets and variables → Actions → Secrets**.
+Set these in repository Actions secrets.
 
-### `AZURE_CLIENT_ID`
-The client (application) ID of the Azure AD app registration used for OIDC authentication.
+### Common OIDC secrets
 
-```bash
-# After creating the app registration (see setup below):
-az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
-```
+- `AZURE_CLIENT_ID`
+- `AZURE_TENANT_ID`
+- `AZURE_SUBSCRIPTION_ID`
 
-### `AZURE_TENANT_ID`
-Your Azure Active Directory tenant ID.
+### Dev deployment secrets
 
-```bash
-az account show --query tenantId -o tsv
-```
+- `SQL_ADMIN_PASSWORD`
+- `AZURE_STATIC_WEB_APPS_API_TOKEN`
 
-### `AZURE_SUBSCRIPTION_ID`
-Your Azure subscription ID.
+### Prod deployment secrets
 
-```bash
-az account show --query id -o tsv
-```
-
-### `SQL_ADMIN_PASSWORD`
-A strong password for the Azure SQL Server admin account (`sqladmin` by default).
-
-- Must be 12+ characters with uppercase, lowercase, digits, and symbols.
-- Example: generate with `openssl rand -base64 18` then append `!Az1` to meet complexity rules.
-- Store the password somewhere safe (e.g., your personal password manager) — you'll need it if you ever reset the SQL server.
-
-### `AZURE_STATIC_WEB_APPS_API_TOKEN`
-The deployment token for Azure Static Web Apps. Only obtainable **after** the first infra deploy (chicken-and-egg — see First Deploy section).
-
-```bash
-az staticwebapp secrets list \
-  --name "kl-hackathon-voting-dev-swa" \
-  --resource-group "kl-hackathon-rg" \
-  --query "properties.apiKey" -o tsv
-```
-
----
+- `SQL_ADMIN_PASSWORD_PROD`
+- `AZURE_STATIC_WEB_APPS_API_TOKEN_PROD`
 
 ## One-Time Azure Setup
 
-Run these commands once before the first deployment. Requires Azure CLI (`az login` first).
+Run these once before deployments.
 
-### 1. Create the Resource Group
+### 1. Create the resource group
 
 ```bash
-az group create \
-  --name kl-hackathon-rg \
-  --location centralus
+az group create --name kl-hackathon-rg --location centralus
 ```
 
-### 2. Create the App Registration (Service Principal for GitHub Actions)
+### 2. Create the app registration + service principal
 
-**PowerShell (Windows):**
-```powershell
-az ad app create --display-name "kl-hackathon-voting-gh-actions"
-
-$APP_ID = az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
-Write-Host "AZURE_CLIENT_ID: $APP_ID"
-
-$SP_OBJECT_ID = az ad sp create --id $APP_ID --query id -o tsv
-Write-Host "SP Object ID: $SP_OBJECT_ID"
-```
-
-**Bash / macOS / Linux:**
 ```bash
 az ad app create --display-name "kl-hackathon-voting-gh-actions"
 APP_ID=$(az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv)
-echo "AZURE_CLIENT_ID: $APP_ID"
-SP_OBJECT_ID=$(az ad sp create --id $APP_ID --query id -o tsv)
-echo "SP Object ID: $SP_OBJECT_ID"
+SP_OBJECT_ID=$(az ad sp create --id "$APP_ID" --query id -o tsv)
 ```
 
-### 3. Assign the Contributor Role
+### 3. Assign Contributor on the resource group
 
-Grant the service principal Contributor access on the resource group (least privilege for deployment).
-
-**PowerShell (Windows):**
-```powershell
-$SUBSCRIPTION_ID = az account show --query id -o tsv
-
-az role assignment create `
-  --assignee $SP_OBJECT_ID `
-  --role Contributor `
-  --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/kl-hackathon-rg"
-```
-
-**Bash / macOS / Linux:**
 ```bash
 SUBSCRIPTION_ID=$(az account show --query id -o tsv)
-
 az role assignment create \
-  --assignee $SP_OBJECT_ID \
+  --assignee "$SP_OBJECT_ID" \
   --role Contributor \
   --scope "/subscriptions/$SUBSCRIPTION_ID/resourceGroups/kl-hackathon-rg"
 ```
 
-### 4. Create the Federated Credential (OIDC)
+### 4. Add OIDC federated credential
 
-This allows GitHub Actions to authenticate with Azure without storing a client secret.
-
-**PowerShell (Windows):**
-
-```powershell
-$credJson = @{
-  name        = "github-main-branch"
-  issuer      = "https://token.actions.githubusercontent.com"
-  subject     = "repo:aligneddev/HackathonVotingApp:ref:refs/heads/main"
-  audiences   = @("api://AzureADTokenExchange")
-  description = "GitHub Actions OIDC for main branch deployments"
-} | ConvertTo-Json -Compress
-
-az ad app federated-credential create --id $APP_ID --parameters $credJson
-```
-
-**Bash / macOS / Linux:**
+Create one credential for repository workflow runs:
 
 ```bash
 az ad app federated-credential create \
-  --id $APP_ID \
+  --id "$APP_ID" \
   --parameters '{
-    "name": "github-main-branch",
+    "name": "github-actions-workflows",
     "issuer": "https://token.actions.githubusercontent.com",
     "subject": "repo:aligneddev/HackathonVotingApp:ref:refs/heads/main",
     "audiences": ["api://AzureADTokenExchange"],
-    "description": "GitHub Actions OIDC for main branch deployments"
+    "description": "GitHub Actions OIDC for repository deployments"
   }'
 ```
 
-> **Note:** The `subject` must exactly match the repository and branch. If you fork this repo, update `aligneddev/HackathonVotingApp` to your `{owner}/{repo}`.
->
-> **Tip:** If `$APP_ID` is not set (e.g., new terminal session), retrieve it first:
-> ```powershell
-> $APP_ID = az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv
-> ```
+If you fork this repository, replace `aligneddev/HackathonVotingApp` with your own `owner/repo`.
 
-### 5. Add GitHub Secrets
+### 5. Add GitHub secrets
 
-Now add the three OIDC secrets to the repository:
-
-**PowerShell (Windows):**
-```powershell
-$TENANT_ID = az account show --query tenantId -o tsv
-
-gh secret set AZURE_CLIENT_ID --body $APP_ID
-gh secret set AZURE_TENANT_ID --body $TENANT_ID
-gh secret set AZURE_SUBSCRIPTION_ID --body $SUBSCRIPTION_ID
-gh secret set SQL_ADMIN_PASSWORD --body "<your-strong-password>"
-```
-
-**Bash / macOS / Linux:**
 ```bash
 TENANT_ID=$(az account show --query tenantId -o tsv)
 
 gh secret set AZURE_CLIENT_ID --body "$APP_ID"
 gh secret set AZURE_TENANT_ID --body "$TENANT_ID"
 gh secret set AZURE_SUBSCRIPTION_ID --body "$SUBSCRIPTION_ID"
-gh secret set SQL_ADMIN_PASSWORD --body "<your-strong-password>"
 ```
 
----
+Set deployment secrets:
 
-## Order of Operations: First Deploy
+```bash
+gh secret set SQL_ADMIN_PASSWORD --body "<dev-sql-password>"
+gh secret set SQL_ADMIN_PASSWORD_PROD --body "<prod-sql-password>"
+gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "<dev-swa-token>"
+gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN_PROD --body "<prod-swa-token>"
+```
 
-The `AZURE_STATIC_WEB_APPS_API_TOKEN` can only be retrieved after the SWA resource is provisioned. Follow these steps:
+## First Deploy Bootstrap
 
-### Step 1 — Provision Infrastructure Manually
+You must bootstrap each environment once to retrieve its Static Web Apps deployment token.
 
-Run the Bicep deployment before the first GitHub Actions run to get the SWA token:
+### Bootstrap dev infrastructure
 
 ```bash
 az deployment group create \
   --resource-group kl-hackathon-rg \
   --template-file infra/main.bicep \
   --parameters \
-      environmentName=dev \
-      appName=kl-hackathon-voting \
-      sqlAdminPassword="<your-sql-admin-password>"
+    environmentName=dev \
+    appName=kl-hackathon-voting \
+    sqlAdminPassword="<dev-sql-password>"
 ```
 
-Optional: override the SQL admin login if you don't want the default `sqladmin`.
+Retrieve dev SWA token and save it:
 
 ```bash
-az deployment group create \
-  --resource-group kl-hackathon-rg \
-  --template-file infra/main.bicep \
-  --parameters \
-      environmentName=dev \
-      appName=kl-hackathon-voting \
-      sqlAdminLogin="<your-admin-login>" \
-      sqlAdminPassword="<your-sql-admin-password>"
-```
-
-### Step 2 — Retrieve and Register the SWA Token
-
-```bash
-SWA_TOKEN=$(az staticwebapp secrets list \
+DEV_SWA_TOKEN=$(az staticwebapp secrets list \
   --name "kl-hackathon-voting-dev-swa" \
   --resource-group "kl-hackathon-rg" \
   --query "properties.apiKey" -o tsv)
 
-gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$SWA_TOKEN"
+gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN --body "$DEV_SWA_TOKEN"
 ```
 
-### Step 3 — Push to `main`
+### Bootstrap prod infrastructure
 
-With all five secrets set, push (or re-run the workflow). The full pipeline will execute:
+```bash
+az deployment group create \
+  --resource-group kl-hackathon-rg \
+  --template-file infra/main.bicep \
+  --parameters \
+    environmentName=prod \
+    appName=kl-hackathon-voting \
+    sqlAdminPassword="<prod-sql-password>"
+```
 
-1. `build-and-test-api` — .NET 10 restore → build → test → publish → zip
-2. `build-and-test-frontend` — Node 22 → npm ci → vitest → vite build
-3. `deploy-infra` — Bicep deployment (idempotent; updates CORS with correct SWA hostname)
-4. `deploy-api` — zip deploy to App Service via OIDC
-5. `deploy-frontend` — SWA deploy via SWA token
+Retrieve prod SWA token and save it:
 
-### Subsequent Deploys
+```bash
+PROD_SWA_TOKEN=$(az staticwebapp secrets list \
+  --name "kl-hackathon-voting-prod-swa" \
+  --resource-group "kl-hackathon-rg" \
+  --query "properties.apiKey" -o tsv)
 
-Every push to `main` is fully automated. No manual steps required after the initial bootstrap.
+gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN_PROD --body "$PROD_SWA_TOKEN"
+```
 
----
+## Deployment Flows
 
-## Notes
+### Dev flow
 
-### CORS Chicken-and-Egg
-The Bicep template sets `Cors__AllowedOrigins__0` on the App Service to the SWA hostname. On the very first deploy (if you skip the manual infra step above), the SWA resource may not exist yet, and CORS will be misconfigured. The second deploy corrects this automatically since Bicep re-evaluates the SWA hostname output each run.
+- Trigger: push to `main`
+- Jobs:
+1. Build/test API and frontend
+2. Deploy infra (`environmentName=dev`)
+3. Deploy API
+4. Deploy frontend
+5. Run smoke checks against API health and frontend URL
 
-### F1 Free Tier Limits
-App Service F1 has 60 CPU minutes/day and no custom domain or SSL offload support. Upgrade to B1 (~$13/month) when you need production SLAs.
+### Prod flow
 
-### SQL Auto-Pause
-The SQL database is configured `autoPauseDelay: 60` (pauses after 60 minutes idle). The first request after a pause incurs a cold-start delay of ~30 seconds. This is acceptable for a hackathon event.
+- Trigger: manual `workflow_dispatch` with `target_environment=prod`
+- Safety gate: `confirm_production` must be set to `true`
+- Jobs:
+1. Build/test API and frontend
+2. Deploy infra (`environmentName=prod`) after explicit confirmation
+3. Deploy API
+4. Deploy frontend
+5. Run smoke checks against API health and frontend URL
 
-### SQL Server Naming
-Azure SQL server names are globally unique. The template now appends a deterministic suffix, so deployments are less likely to fail on name collisions.
+## Operational Notes
+
+- Single resource group is intentional for now; environment isolation is by resource name.
+- App Service F1 is not ideal for production reliability. Upgrade to Basic/Standard when event load increases.
+- SQL serverless auto-pause (`autoPauseDelay: 60`) causes first-request cold start after idle periods.
