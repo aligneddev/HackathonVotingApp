@@ -2,6 +2,7 @@ using FluentAssertions;
 using HackathonVotingApp.Api.Data;
 using HackathonVotingApp.Api.Models;
 using HackathonVotingApp.Api.Services;
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Xunit;
 
@@ -167,5 +168,35 @@ public class LeaderboardServiceTests
         // Current implementation sorts by vote count only, so this should fail in red phase.
         result[0].Id.Should().Be(p1.Id);
         result[1].Id.Should().Be(p2.Id);
+    }
+
+    [Fact]
+    public async Task GetLeaderboard_RunsAgainstRelationalProvider()
+    {
+        await using var connection = new SqliteConnection("Data Source=:memory:");
+        await connection.OpenAsync();
+
+        var options = new DbContextOptionsBuilder<AppDbContext>().UseSqlite(connection).Options;
+
+        await using var db = new AppDbContext(options);
+        await db.Database.EnsureCreatedAsync();
+
+        var p1 = new Presentation { Title = "Ranked Talk", PresenterName = "Speaker A" };
+        var p2 = new Presentation { Title = "Backup Talk", PresenterName = "Speaker B" };
+        db.Presentations.AddRange(p1, p2);
+        db.Votes.AddRange(
+            new Vote { PresentationId = p1.Id, Ranking = 1 },
+            new Vote { PresentationId = p2.Id, Ranking = 3 }
+        );
+        await db.SaveChangesAsync();
+
+        var svc = new LeaderboardService(db);
+
+        var result = (await svc.GetLeaderboardAsync()).ToList();
+
+        result.Should().HaveCount(2);
+        result[0].Id.Should().Be(p1.Id);
+        result[0].TotalPoints.Should().Be(8);
+        result[1].TotalPoints.Should().Be(3);
     }
 }

@@ -6,17 +6,6 @@ namespace HackathonVotingApp.Api.Services;
 
 public class LeaderboardService(AppDbContext db) : ILeaderboardService
 {
-    private static int GetPointsForRanking(int ranking) =>
-        ranking switch
-        {
-            1 => 8,
-            2 => 5,
-            3 => 3,
-            4 => 2,
-            5 => 1,
-            _ => 0,
-        };
-
     private async Task<int> GetCurrentSessionIdAsync()
     {
         var state = await db.VotingStates.SingleOrDefaultAsync(v => v.Id == 1);
@@ -41,35 +30,39 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
         var sessionId = await GetCurrentSessionIdAsync();
         var votes = db.Votes.Where(v => v.SessionId == sessionId);
 
-        return await db
+        var summaries = await db
             .Presentations.Select(p => new
             {
                 p.Id,
                 p.Title,
                 p.PresenterName,
                 VoteCount = votes.Count(v => v.PresentationId == p.Id),
-                TotalPoints = votes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (int?)GetPointsForRanking(v.Ranking))
+                TotalPoints = votes.Where(v => v.PresentationId == p.Id).Select(v => (int?)(v.Ranking == 1 ? 8 : v.Ranking == 2 ? 5 : v.Ranking == 3 ? 3 : v.Ranking == 4 ? 2 : v.Ranking == 5 ? 1 : 0))
                     .Sum()
                     ?? 0,
-                AveragePoints = votes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (double?)GetPointsForRanking(v.Ranking))
+                AveragePoints = votes.Where(v => v.PresentationId == p.Id).Select(v => (double?)(v.Ranking == 1 ? 8 : v.Ranking == 2 ? 5 : v.Ranking == 3 ? 3 : v.Ranking == 4 ? 2 : v.Ranking == 5 ? 1 : 0))
                     .Average(),
                 FirstPlaceCount = votes.Count(v => v.PresentationId == p.Id && v.Ranking == 1),
                 SecondPlaceCount = votes.Count(v => v.PresentationId == p.Id && v.Ranking == 2),
-                FinalReachedAt = votes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (DateTimeOffset?)v.CreatedAt)
-                    .Max(),
+            })
+            .ToListAsync();
+
+        return summaries
+            .Select(p => new
+            {
+                p.Id,
+                p.Title,
+                p.PresenterName,
+                p.VoteCount,
+                p.TotalPoints,
+                p.AveragePoints,
+                p.FirstPlaceCount,
+                p.SecondPlaceCount,
             })
             .OrderByDescending(p => p.TotalPoints)
             .ThenByDescending(p => p.FirstPlaceCount)
             .ThenByDescending(p => p.SecondPlaceCount)
             .ThenByDescending(p => p.VoteCount)
-            .ThenBy(p => p.FinalReachedAt == null)
-            .ThenBy(p => p.FinalReachedAt)
             .ThenBy(p => p.Id)
             .Take(limit)
             .Select(p => new LeaderboardEntryResponse(
@@ -80,6 +73,6 @@ public class LeaderboardService(AppDbContext db) : ILeaderboardService
                 p.TotalPoints,
                 p.AveragePoints
             ))
-            .ToListAsync();
+            .ToList();
     }
 }

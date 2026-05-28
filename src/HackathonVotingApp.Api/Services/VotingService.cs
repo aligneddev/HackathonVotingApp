@@ -33,17 +33,6 @@ public class VotingService(AppDbContext db) : IVotingService
         return ascending || descending;
     }
 
-    private static int GetPointsForRanking(int ranking) =>
-        ranking switch
-        {
-            1 => 8,
-            2 => 5,
-            3 => 3,
-            4 => 2,
-            5 => 1,
-            _ => 0,
-        };
-
     private async Task<VotingState> GetOrCreateVotingStateAsync()
     {
         var state = await db.VotingStates.SingleOrDefaultAsync(v => v.Id == 1);
@@ -135,14 +124,10 @@ public class VotingService(AppDbContext db) : IVotingService
                 p.Title,
                 p.PresenterName,
                 VoteCount = currentSessionVotes.Count(v => v.PresentationId == p.Id),
-                TotalPoints = currentSessionVotes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (int?)GetPointsForRanking(v.Ranking))
+                TotalPoints = currentSessionVotes.Where(v => v.PresentationId == p.Id).Select(v => (int?)(v.Ranking == 1 ? 8 : v.Ranking == 2 ? 5 : v.Ranking == 3 ? 3 : v.Ranking == 4 ? 2 : v.Ranking == 5 ? 1 : 0))
                     .Sum()
                     ?? 0,
-                AveragePoints = currentSessionVotes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (double?)GetPointsForRanking(v.Ranking))
+                AveragePoints = currentSessionVotes.Where(v => v.PresentationId == p.Id).Select(v => (double?)(v.Ranking == 1 ? 8 : v.Ranking == 2 ? 5 : v.Ranking == 3 ? 3 : v.Ranking == 4 ? 2 : v.Ranking == 5 ? 1 : 0))
                     .Average(),
                 FirstPlaceCount = currentSessionVotes.Count(v =>
                     v.PresentationId == p.Id && v.Ranking == 1
@@ -150,23 +135,32 @@ public class VotingService(AppDbContext db) : IVotingService
                 SecondPlaceCount = currentSessionVotes.Count(v =>
                     v.PresentationId == p.Id && v.Ranking == 2
                 ),
-                FinalReachedAt = currentSessionVotes
-                    .Where(v => v.PresentationId == p.Id)
-                    .Select(v => (DateTimeOffset?)v.CreatedAt)
-                    .Max(),
                 AverageRanking = currentSessionVotes
                     .Where(v => v.PresentationId == p.Id)
                     .Select(v => (double?)v.Ranking)
                     .Average(),
             })
+            .ToListAsync();
+
+        var orderedSummaries = summaries
+            .Select(s => new
+            {
+                s.Id,
+                s.Title,
+                s.PresenterName,
+                s.VoteCount,
+                s.TotalPoints,
+                s.AveragePoints,
+                s.FirstPlaceCount,
+                s.SecondPlaceCount,
+                s.AverageRanking,
+            })
             .OrderByDescending(p => p.TotalPoints)
             .ThenByDescending(p => p.FirstPlaceCount)
             .ThenByDescending(p => p.SecondPlaceCount)
             .ThenByDescending(p => p.VoteCount)
-            .ThenBy(p => p.FinalReachedAt == null)
-            .ThenBy(p => p.FinalReachedAt)
             .ThenBy(p => p.Id)
-            .ToListAsync();
+            .ToList();
 
         var notes = await db
             .Votes.Where(v =>
@@ -187,7 +181,7 @@ public class VotingService(AppDbContext db) : IVotingService
                 g => (IReadOnlyList<VoteNoteResponse>)g.Select(v => v.Note).ToList()
             );
 
-        return summaries
+        return orderedSummaries
             .Select(s => new AdminVoteResultResponse(
                 s.Id,
                 s.Title,

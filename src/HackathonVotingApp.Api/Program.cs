@@ -130,14 +130,24 @@ votes.MapPost(
                 StatusCodes.Status403Forbidden
             ),
             HackathonVotingApp.Api.Models.SubmitBallotError.DuplicateBallot => Results.Conflict(),
-            HackathonVotingApp.Api.Models.SubmitBallotError.InvalidVoter
-            or HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot =>
-                Results.BadRequest(),
-            _ => Results.BadRequest(),
+            HackathonVotingApp.Api.Models.SubmitBallotError.InvalidVoter => Results.BadRequest(
+                new
+                {
+                    error = "InvalidVoter",
+                    message = "Voter alias must be 8–12 alphanumeric characters and include at least one digit.",
+                }
+            ),
+            HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot => Results.BadRequest(
+                new
+                {
+                    error = "InvalidBallot",
+                    message = "The ballot entries are invalid. Ensure you have ranked all required presentations.",
+                }
+            ),
+            _ => Results.BadRequest(new { error = "Unknown" }),
         };
     }
 );
-
 
 app.MapGet(
     "/api/leaderboard",

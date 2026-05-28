@@ -1,12 +1,25 @@
 import { useEffect, useState } from 'react';
 import { presentationApi, Presentation } from '../api/presentationApi';
-import { votingApi } from '../api/votingApi';
+import { votingApi, BallotError } from '../api/votingApi';
 import RankedVotingList, { RankedVotingListItem } from '../components/RankedVotingList';
 import { adminVotingApi } from '../api/adminVotingApi';
 
 function getSessionKey(presentations: Presentation[]): string {
   const ids = [...presentations].map(p => p.id).sort().join('-');
   return `voted-session-${ids}`;
+}
+
+function validateToken(token: string): string | null {
+  const normalized = token.trim().toUpperCase();
+  if (normalized.length < 8 || normalized.length > 12)
+    return 'Alias must be 8–12 characters.';
+  if (!/^[A-Z0-9]+$/.test(normalized))
+    return 'Alias must contain only letters and digits (no spaces or symbols).';
+  if (!/[0-9]/.test(normalized))
+    return 'Alias must include at least one digit.';
+  if (new Set(normalized).size === 1)
+    return 'Alias is too simple — avoid repeating the same character.';
+  return null;
 }
 
 export default function VotingPage() {
@@ -44,6 +57,12 @@ export default function VotingPage() {
       return;
     }
 
+    const tokenError = validateToken(voterAliasToken);
+    if (tokenError) {
+      setError(tokenError);
+      return;
+    }
+
     if (submitting || submitted) return;
     setSubmitting(true);
     setError(null);
@@ -59,13 +78,20 @@ export default function VotingPage() {
       localStorage.setItem(getSessionKey(rankedItems.map(r => r.presentation)), 'true');
       setSubmitted(true);
     } catch (err) {
-      const msg = err instanceof Error ? err.message : '';
-      if (msg.includes('409')) {
-        setError('You have already voted in this session.');
-        setSubmitted(true);
-      } else if (msg.includes('403')) {
-        setError('Voting is currently closed by admin.');
-        setIsVotingOpen(false);
+      if (err instanceof BallotError) {
+        if (err.status === 409) {
+          setError('You have already voted in this session.');
+          setSubmitted(true);
+        } else if (err.status === 403) {
+          setError('Voting is currently closed by admin.');
+          setIsVotingOpen(false);
+        } else if (err.code === 'InvalidVoter') {
+          setError('Your voter alias doesn\'t meet requirements: 8–12 alphanumeric characters, at least one digit.');
+        } else if (err.code === 'InvalidBallot') {
+          setError('Your ballot is invalid. Please reload the page and try again.');
+        } else {
+          setError('Something went wrong. Please try again.');
+        }
       } else {
         setError('Something went wrong. Please try again.');
       }
