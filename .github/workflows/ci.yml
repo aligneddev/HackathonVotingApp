@@ -44,8 +44,15 @@ jobs:
       - name: Build
         run: dotnet build --no-restore --configuration Release
 
-      - name: Test
-        run: dotnet test --no-build --configuration Release --verbosity normal
+      - name: Test API Endpoints (E2E)
+        run: >
+          dotnet test --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName~HackathonVotingApp.Api.Tests.Endpoints"
+
+      - name: Test API (Non-Endpoint)
+        run: >
+          dotnet test --no-build --configuration Release --verbosity normal
+          --filter "FullyQualifiedName!~HackathonVotingApp.Api.Tests.Endpoints"
 
       - name: Publish API
         if: github.event_name != 'pull_request'

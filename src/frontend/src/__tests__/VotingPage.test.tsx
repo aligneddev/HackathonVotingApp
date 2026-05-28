@@ -59,6 +59,7 @@ describe('VotingPage', () => {
 
   it('submits_rankings_as_single_ballot', async () => {
     const user = userEvent.setup();
+    const voterAlias = 'Ada00077';
     mockGetPresentations.mockResolvedValueOnce([
       {
         id: 'p-1',
@@ -84,11 +85,11 @@ describe('VotingPage', () => {
     render(<VotingPage />);
 
     const nameInput = await screen.findByLabelText(/voter alias/i);
-    await user.type(nameInput, 'Ada Lovelace');
+    await user.type(nameInput, voterAlias);
     await user.click(screen.getByRole('button', { name: /submit rankings/i }));
 
     await waitFor(() => {
-      expect(mockCastBallot).toHaveBeenCalledWith('Ada Lovelace', [
+      expect(mockCastBallot).toHaveBeenCalledWith(voterAlias, [
         { presentationId: 'p-1', ranking: 1, notes: undefined },
         { presentationId: 'p-2', ranking: 2, notes: undefined },
       ]);
