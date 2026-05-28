@@ -66,12 +66,10 @@ public class VotingServiceTests
     // --- SubmitBallotAsync token validation ---
 
     [Theory]
-    [InlineData("SHORT1")]          // too short (6)
-    [InlineData("TOOLONGTOKEN123")] // too long (15)
-    [InlineData("NOODIGITS")]       // no digit (9 chars, but no digit)
-    [InlineData("ALICE 01")]        // space is invalid character
+    [InlineData("AB")]              // too short (2)
+    [InlineData("ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567")] // too long (33)
     [InlineData("ALICE-01")]        // hyphen is invalid
-    [InlineData("AAAAAAAA")]        // all same character
+    [InlineData("AAA")]             // all same character
     [InlineData("12345678")]        // ascending sequential digits
     [InlineData("87654321")]        // descending sequential digits
     public async Task SubmitBallotAsync_WithInvalidToken_ReturnsInvalidVoter(string token)
@@ -92,10 +90,10 @@ public class VotingServiceTests
     }
 
     [Theory]
-    [InlineData("ALICE001")]        // 8 chars, ≥1 digit
-    [InlineData("alice001")]        // lowercase normalized to valid
-    [InlineData("ABCDE12345")]      // 10 chars
-    [InlineData("Z9Z9Z9Z9Z9Z9")]   // 12 chars (max)
+    [InlineData("ALICE")]           // letters only now valid
+    [InlineData("alice")]           // lowercase normalized to valid
+    [InlineData("TEAM ROCKET")]     // spaces are now valid
+    [InlineData("A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1")] // 32 chars (max)
     [InlineData("12345670")]        // digits but not sequential
     public async Task SubmitBallotAsync_WithValidToken_ReturnsSuccess(string token)
     {

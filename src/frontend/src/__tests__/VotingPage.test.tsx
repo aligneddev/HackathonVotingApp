@@ -59,7 +59,7 @@ describe('VotingPage', () => {
 
   it('submits_rankings_as_single_ballot', async () => {
     const user = userEvent.setup();
-    const voterAlias = 'Ada00077';
+    const voterAlias = 'Team Rocket';
     mockGetPresentations.mockResolvedValueOnce([
       {
         id: 'p-1',

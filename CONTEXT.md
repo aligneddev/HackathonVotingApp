@@ -48,11 +48,11 @@ An eligible participant in the hackathon event who submits a ballot using a self
 A session-scoped unique identifier used for ballot eligibility and deduplication. For simplicity, tokens are self-claimed by attendees during voting (not pre-issued at check-in). Ballot uniqueness is enforced by Voter Alias Token (not by name string) within a Voting Session. Real name is retained for admin audit but is not used as the primary uniqueness key. Before first successful ballot submission, attendees may edit a token entry. After an accepted ballot, token identity is immutable for that session except when the associated ballot is admin-deleted during active voting, in which case the same token becomes immediately reusable.
 
 Token format policy:
-- Length: 8 to 12 characters
-- Character set: uppercase alphanumeric only
-- Composition: must include at least one digit
+- Length: 3 to 32 characters
+- Character set: letters, digits, and spaces
+- Composition: no required digit
 - Comparison: case-insensitive on the server after normalization
-- Weak patterns rejected (for example: 12345678, AAAAAAAA)
+- Weak patterns rejected (for example: 12345678, AAAAAAAA, "   ")
 
 Operational simplicity policy:
 - No brute-force rate limiting or lockout is applied to token entry during voting

@@ -27,21 +27,35 @@ export default function LeaderboardPage() {
           <ol className="space-y-3">
             {entries.map((entry, index) => {
               const rank = index + 1;
-              const isTopThree = rank <= 3;
+              const rankStyles = [
+                'bg-amber-950/55 border-amber-400/70',
+                'bg-gray-800 border-gray-400/70',
+                'bg-orange-950/55 border-orange-700/70',
+                'bg-emerald-950/55 border-emerald-600/60',
+              ];
+              const cardClass = rank <= 4 ? rankStyles[rank - 1] : 'bg-gray-900 border-gray-700';
+              const rankClass = rank === 1
+                ? 'text-amber-300'
+                : rank === 2
+                  ? 'text-gray-200'
+                  : rank === 3
+                    ? 'text-orange-300'
+                    : rank === 4
+                      ? 'text-emerald-300'
+                      : 'text-gray-500';
+              const medalEmoji = rank === 1 ? '🥇' : rank === 2 ? '🥈' : rank === 3 ? '🥉' : '';
               return (
                 <li
                   key={entry.id}
                   className={[
                     'flex items-center gap-4 p-4 rounded-xl border',
-                    isTopThree
-                      ? 'bg-amber-900/20 border-amber-700/70'
-                      : 'bg-gray-900 border-gray-700',
+                    cardClass,
                   ].join(' ')}
                 >
-                  <span className={[
-                    'text-2xl font-bold w-8 text-center',
-                    isTopThree ? 'text-amber-300' : 'text-gray-500',
-                  ].join(' ')}>{rank}</span>
+                  <span className={['text-2xl font-bold w-12 text-center inline-flex items-center justify-center gap-1', rankClass].join(' ')}>
+                    {medalEmoji && <span aria-hidden="true">{medalEmoji}</span>}
+                    <span>{rank}</span>
+                  </span>
                   <div className="flex-1">
                     <span className="font-semibold text-gray-100">{entry.title}</span>
                     <p className="text-sm text-gray-400">{entry.presenterName}</p>

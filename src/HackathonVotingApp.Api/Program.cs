@@ -134,7 +134,7 @@ votes.MapPost(
                 new
                 {
                     error = "InvalidVoter",
-                    message = "Voter alias must be 8–12 alphanumeric characters and include at least one digit.",
+                    message = "Voter alias must be 3–32 characters and can contain letters, numbers, and spaces.",
                 }
             ),
             HackathonVotingApp.Api.Models.SubmitBallotError.InvalidBallot => Results.BadRequest(

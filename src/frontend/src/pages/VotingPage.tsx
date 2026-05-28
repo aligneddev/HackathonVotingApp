@@ -11,12 +11,10 @@ function getSessionKey(presentations: Presentation[]): string {
 
 function validateToken(token: string): string | null {
   const normalized = token.trim().toUpperCase();
-  if (normalized.length < 8 || normalized.length > 12)
-    return 'Alias must be 8–12 characters.';
-  if (!/^[A-Z0-9]+$/.test(normalized))
-    return 'Alias must contain only letters and digits (no spaces or symbols).';
-  if (!/[0-9]/.test(normalized))
-    return 'Alias must include at least one digit.';
+  if (normalized.length < 3 || normalized.length > 32)
+    return 'Alias must be 3–32 characters.';
+  if (!/^[A-Z0-9 ]+$/.test(normalized))
+    return 'Alias can contain only letters, numbers, and spaces.';
   if (new Set(normalized).size === 1)
     return 'Alias is too simple — avoid repeating the same character.';
   return null;
@@ -86,7 +84,7 @@ export default function VotingPage() {
           setError('Voting is currently closed by admin.');
           setIsVotingOpen(false);
         } else if (err.code === 'InvalidVoter') {
-          setError('Your voter alias doesn\'t meet requirements: 8–12 alphanumeric characters, at least one digit.');
+          setError('Your voter alias doesn\'t meet requirements: 3–32 characters using letters, numbers, and spaces.');
         } else if (err.code === 'InvalidBallot') {
           setError('Your ballot is invalid. Please reload the page and try again.');
         } else {
@@ -131,7 +129,7 @@ export default function VotingPage() {
           {' '}Add optional notes for each.
         </p>
         <p className="text-amber-300 text-sm mb-4">
-          Enter a voter alias (8–12 alphanumeric characters, at least one digit, e.g. ALICE007). Use the same alias if you need to re-enter.
+          Enter a voter alias (3–32 characters, letters/numbers/spaces, e.g. Team Rocket). Use the same alias if you need to re-enter.
         </p>
 
         {loading ? (
@@ -162,9 +160,9 @@ export default function VotingPage() {
                 type="text"
                 value={voterAliasToken}
                 onChange={e => setVoterAliasToken(e.target.value)}
-                maxLength={12}
+                maxLength={32}
                 disabled={submitting}
-                placeholder="e.g. ALICE007"
+                placeholder="e.g. Team Rocket"
                 className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>

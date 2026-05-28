@@ -59,8 +59,8 @@ namespace HackathonVotingApp.Api.Data.Migrations
 
                     b.Property<string>("NormalizedVoterAliasToken")
                         .IsRequired()
-                        .HasMaxLength(12)
-                        .HasColumnType("nvarchar(12)");
+                        .HasMaxLength(32)
+                        .HasColumnType("nvarchar(32)");
 
                     b.Property<string>("Notes")
                         .HasColumnType("nvarchar(max)");

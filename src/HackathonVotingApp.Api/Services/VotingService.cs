@@ -6,14 +6,20 @@ namespace HackathonVotingApp.Api.Services;
 
 public class VotingService(AppDbContext db) : IVotingService
 {
+    private const int MinAliasLength = 3;
+    private const int MaxAliasLength = 32;
+
     private static string NormalizeToken(string token) =>
         token.Trim().ToUpperInvariant();
 
     private static bool IsValidToken(string normalized)
     {
-        if (normalized.Length < 8 || normalized.Length > 12) return false;
-        if (!normalized.All(char.IsLetterOrDigit)) return false;
-        if (!normalized.Any(char.IsDigit)) return false;
+        if (normalized.Length < MinAliasLength || normalized.Length > MaxAliasLength)
+            return false;
+
+        if (!normalized.All(ch => char.IsLetterOrDigit(ch) || ch == ' '))
+            return false;
+
         return !IsWeakToken(normalized);
     }
 
