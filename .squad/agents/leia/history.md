@@ -160,3 +160,42 @@ Kevin approved standing conventions for all frontend work:
 - Orchestration log: .squad/orchestration-log/2026-05-07T15-10-44-807-05-00-leia.md
 
 **Status:** Complete — RankedVotingList fully integrated with Han's backend API
+
+### 2026-05-29 — Admin Login Page, Auth Guard, Cookie-Aware API Calls
+
+**Date:** 2026-05-29 | **Status:** ✅ Complete
+
+Implemented the full admin authentication flow on the frontend.
+
+#### New files
+- `src/frontend/src/api/adminAuthApi.ts` — `login()`, `logout()`, `checkStatus()`, all with `credentials: 'include'`
+- `src/frontend/src/pages/AdminLoginPage.tsx` — password form, error state, loading state, navigates to `/admin` on success
+- `src/frontend/src/components/AdminAuthGuard.tsx` — checks auth on mount + every location change; shows loading spinner; redirects to `/admin/login` if unauthenticated
+
+#### Updated files
+- `src/frontend/src/App.tsx` — added `AdminLoginPage` route outside the guard; wrapped all admin routes in `AdminAuthGuard`; `AdminLayout` gains `useNavigate` + Logout button
+- `src/frontend/src/api/adminVotingApi.ts` — added `credentials: 'include'` + 401 check to all three calls
+- `src/frontend/src/api/adminResultsApi.ts` — added `credentials: 'include'` + 401 check
+- `src/frontend/src/api/adminVotesApi.ts` — added `credentials: 'include'` + 401 check
+- `src/frontend/src/api/presentationApi.ts` — added `credentials: 'include'` + 401 check to `createPresentation` and `deletePresentation` (admin-only); `getPresentations` left as public
+
+#### Key decisions
+- `AdminAuthGuard` uses `useLocation()` as the `useEffect` dependency — re-checks auth on every navigation, which prevents stale "authenticated" state after cookie expiry
+- `AdminLayout.handleLogout` uses `try/finally` — always navigates to login even if `logout()` fails (cookie may already be gone)
+- Password is cleared from React state immediately after submit (success or fail) — never lingers
+- `if (res.status === 401) throw new Error('Unauthorized')` before the generic `if (!res.ok)` check in all admin APIs — enables guard to distinguish auth errors from other failures
+- No localStorage/sessionStorage for auth state — cookie-only
+
+#### Test results
+All 31 frontend tests passing ✅ — 0 regressions
+
+
+
+## 2026-05-29T14:09:22-05:00 - Admin Cookie Auth Complete
+- Created AdminLoginPage.tsx with password form, error/loading states
+- Created AdminAuthGuard.tsx layout route wrapper with location-aware re-checks
+- Created adminAuthApi.ts for login/logout/checkStatus
+- Updated App.tsx with /admin/login route and guard wrapping
+- Updated 4 admin API files with credentials: 'include' and 401 error handling
+- 31 tests passing, no regressions
+- Cross-agent: Backend (Han) providing endpoints, Tests (Finn) covering integration

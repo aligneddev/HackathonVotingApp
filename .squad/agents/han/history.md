@@ -25,7 +25,31 @@ See `.squad/orchestration-log/2026-05-04T18-29-24Z-han.md` for full details.
 
 ## Learnings
 
-### 2026-05-07: Vote Ranking Feature
+### 2026-05-29: Admin Cookie Authentication
+
+**Task:** Add password-based protection to all `/api/admin` routes using HttpOnly cookie + IDataProtection.
+
+**Files changed:**
+- `src/HackathonVotingApp.Api/Program.cs` — added `AddDataProtection()`, `AllowCredentials()` to CORS, three unprotected auth endpoints, and an endpoint filter on the protected admin group
+- `src/HackathonVotingApp.Api/Models/AdminDtos.cs` — new file: `LoginRequest(string Password)` record
+- `src/HackathonVotingApp.Api/appsettings.Development.json` — added `"AdminPassword": "dev-password"` for local dev
+- `src/HackathonVotingApp.Api.Tests/Endpoints/VotingEndpointTests.cs` — updated `CreateClientWithFreshDb` to set `AdminPassword` + `HandleCookies = true`, added `LoginAdminAsync` helper, called login before all admin endpoint calls
+
+**Auth flow:**
+- `POST /api/admin/login` — validates password vs config, sets encrypted `admin_auth` HttpOnly cookie via `IDataProtector.Protect("admin:authenticated")`
+- `POST /api/admin/logout` — deletes the cookie
+- `GET /api/admin/auth-status` — checks cookie validity, returns `{ authenticated: true/false }`
+- Protected group filter: unprotects cookie, checks value == `"admin:authenticated"`, returns 401 on any failure
+
+**Key decisions:**
+- `IDataProtection` with `CreateProtector("AdminAuth")` — uses ASP.NET's built-in key management, no manual secret handling
+- `Secure = true` only in Production; `SameSite = None` in Production (cross-origin SWA + App Service), `Lax` in Development
+- Login always returns 401 if `ADMIN_PASSWORD` is null/empty — no dev bypass
+- `AllowCredentials()` added to CORS so cookies flow cross-origin
+
+**Test pattern:** `WebApplicationFactoryClientOptions { HandleCookies = true }` enables cookie jar in integration tests. Set `AdminPassword` via `builder.UseSetting("AdminPassword", TestPassword)` in `WithWebHostBuilder`.
+
+**Build result:** 71/71 tests passing, 0 warnings.
 
 **Task:** Add `Ranking` (1–5) and `Notes` (optional string) to the Vote model and wire up through service and endpoint.
 
@@ -135,3 +159,12 @@ Kevin approved standing conventions for all backend work:
 - Orchestration log: .squad/orchestration-log/2026-05-07T15-10-44-807-05-00-han.md
 
 **Status:** Complete — ready for frontend integration (Leia's RankedVotingList)
+
+
+
+## 2026-05-29T14:09:22-05:00 - Admin Cookie Auth Complete
+- Implemented POST /api/admin/login, POST /api/admin/logout, GET /api/admin/auth-status endpoints
+- Protected 5 admin routes with IDataProtector-encrypted HttpOnly cookies
+- Added CORS AllowCredentials() to FrontendCors policy
+- Configuration via AdminPassword (IConfiguration)\n- 71 tests passing
+- Cross-agent: Frontend (Leia) consuming endpoints, Tests (Finn) covering integration
