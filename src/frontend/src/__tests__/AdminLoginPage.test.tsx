@@ -21,7 +21,7 @@ vi.mock("../api/adminAuthApi", () => ({
   },
 }));
 
-const mockApi = adminAuthApiModule.adminAuthApi as {
+const mockApi = adminAuthApiModule.adminAuthApi as unknown as {
   login: ReturnType<typeof vi.fn>;
 };
 
