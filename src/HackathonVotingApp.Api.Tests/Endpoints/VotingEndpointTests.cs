@@ -19,6 +19,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         _factory = factory;
     }
 
+    private const string TestAdminPassword = "test-admin";
+
     private HttpClient CreateClientWithFreshDb(out string dbName)
     {
         dbName = $"TestDb-{Guid.NewGuid()}";
@@ -26,6 +28,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         return _factory
             .WithWebHostBuilder(builder =>
             {
+                builder.UseSetting("AdminPassword", TestAdminPassword);
                 builder.ConfigureServices(services =>
                 {
                     var descriptor = services.SingleOrDefault(d =>
@@ -38,8 +41,11 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
                     );
                 });
             })
-            .CreateClient();
+            .CreateClient(new WebApplicationFactoryClientOptions { HandleCookies = true });
     }
+
+    private Task LoginAdminAsync(HttpClient client) =>
+        client.PostAsJsonAsync("/api/admin/login", new { password = TestAdminPassword });
 
     private async Task<Guid> SeedPresentationAsync(HttpClient client)
     {
@@ -113,6 +119,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/start", null);
 
         var payload = new
@@ -166,6 +173,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/start", null);
 
         var payload = new
@@ -213,6 +221,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/start", null);
 
         var firstPayload = new
@@ -306,6 +315,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 5);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/end", null);
 
         var payload = new
@@ -364,6 +374,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         await SeedPresentationAsync(dbName, presentationAId, "Model Safety", "Ada");
         await SeedPresentationAsync(dbName, presentationBId, "Platform Scale", "Linus");
 
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/start", null);
 
         await SeedVotesAsync(
@@ -437,6 +448,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationIds = await SeedPresentationsAsync(client, 3);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/start", null);
 
         var incompletePayload = new
@@ -496,6 +508,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             }
         );
 
+        await LoginAdminAsync(client);
+
         // Act
         var response = await client.GetAsync("/api/admin/results");
 
@@ -539,6 +553,8 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
             }
         );
 
+        await LoginAdminAsync(client);
+
         // Act
         var response = await client.GetAsync("/api/admin/results");
 
@@ -559,6 +575,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
     {
         // Arrange
         var client = CreateClientWithFreshDb(out _);
+        await LoginAdminAsync(client);
 
         // Act
         var response = await client.GetAsync("/api/admin/voting-state");
@@ -576,6 +593,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationId = await SeedPresentationAsync(client);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/end", null);
 
         // Act
@@ -598,6 +616,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Arrange
         var client = CreateClientWithFreshDb(out _);
         var presentationId = await SeedPresentationAsync(client);
+        await LoginAdminAsync(client);
         await client.PostAsync("/api/admin/voting/end", null);
         await client.PostAsync("/api/admin/voting/start", null);
 

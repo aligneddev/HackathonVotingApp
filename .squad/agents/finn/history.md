@@ -66,6 +66,30 @@ Created AdminAuthEndpointTests.cs (13 tests):
 
 **Cross-agent:** Backend (Han) provided endpoints, Frontend (Leia) consuming endpoints.
 
+### 2026-05-29: Admin Auth Coverage Audit
+**Status:** ✅ Green — 6 new API tests + 7 new frontend tests, all passing
+
+**API additions (AdminAuthEndpointTests.cs — 13 → 19 tests):**
+- `TamperedCookie_Returns401` — crafts a bogus cookie string; confirms DataProtection rejects it with 401
+- `LogoutThenRequest_Returns401` — login → logout → protected route confirms logout actually clears access
+- `AdminVotes_WithValidCookie_Returns200`
+- `AdminVotingState_WithValidCookie_Returns200`
+- `AdminStartVoting_WithValidCookie_Returns200`
+- `AdminEndVoting_WithValidCookie_Returns200`
+
+**Frontend additions:**
+- `AdminLoginPage.test.tsx` (4 tests): renders form, error on failure, clears password on failure, navigates on success
+- `AdminAuthGuard.test.tsx` (3 tests): loading state, redirect when unauthenticated, renders outlet when authenticated
+
+**Test Patterns:**
+- Tampered cookie: use `SendAsync` with manual `Cookie` header on unauthenticated client
+- Logout flow: `CreateAuthenticatedClient()` handles cookie jar clearing automatically after logout
+- `useNavigate` mock: partial re-export of `react-router-dom` with `useNavigate: () => mockNavigate`
+- Guard redirect test: `MemoryRouter + Routes + Route` with sibling login route to observe redirect destination
+- Guard outlet test: nested `<Route>` with `<Route index>` child renders via `<Outlet />`
+
+**Build:** 0 errors ✅ | **API Tests:** 77 passing ✅ | **Frontend Tests:** 38 passing ✅
+
 ## Key Learnings
 
 - **Vertical slices:** Each slice is a complete Red → Green → Refactor cycle across backend, frontend, and tests.

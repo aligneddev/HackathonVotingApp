@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Presentation } from '../api/presentationApi';
+import { useState } from "react";
+import { Presentation } from "../api/presentationApi";
 
 export interface RankedVotingListItem {
   presentation: Presentation;
@@ -12,7 +12,11 @@ interface RankedVotingListProps {
   disabled?: boolean;
 }
 
-export default function RankedVotingList({ items, onChange, disabled = false }: RankedVotingListProps) {
+export default function RankedVotingList({
+  items,
+  onChange,
+  disabled = false,
+}: RankedVotingListProps) {
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
@@ -72,14 +76,14 @@ export default function RankedVotingList({ items, onChange, disabled = false }: 
             key={item.presentation.id}
             draggable={!disabled}
             onDragStart={() => handleDragStart(index)}
-            onDragOver={e => handleDragOver(e, index)}
+            onDragOver={(e) => handleDragOver(e, index)}
             onDrop={() => handleDrop(index)}
             onDragEnd={handleDragEnd}
             className={[
-              'bg-gray-900 border rounded-xl p-4 transition-all',
-              isDragging ? 'opacity-40 border-gray-600' : 'border-gray-700',
-              isDropTarget ? 'border-indigo-500 ring-1 ring-indigo-500' : '',
-            ].join(' ')}
+              "bg-gray-900 border rounded-xl p-4 transition-all",
+              isDragging ? "opacity-40 border-gray-600" : "border-gray-700",
+              isDropTarget ? "border-indigo-500 ring-1 ring-indigo-500" : "",
+            ].join(" ")}
           >
             <div className="flex items-start gap-3">
               {/* Drag handle */}
@@ -97,14 +101,20 @@ export default function RankedVotingList({ items, onChange, disabled = false }: 
 
               {/* Presentation info + notes */}
               <div className="flex-1 min-w-0">
-                <h2 className="font-semibold text-gray-100">{item.presentation.title}</h2>
-                <p className="text-sm text-indigo-300 mt-0.5">{item.presentation.presenterName}</p>
+                <h2 className="font-semibold text-gray-100">
+                  {item.presentation.title}
+                </h2>
+                <p className="text-sm text-indigo-300 mt-0.5">
+                  {item.presentation.presenterName}
+                </p>
                 {item.presentation.description && (
-                  <p className="text-sm text-gray-400 mt-1">{item.presentation.description}</p>
+                  <p className="text-sm text-gray-400 mt-1">
+                    {item.presentation.description}
+                  </p>
                 )}
                 <textarea
                   value={item.notes}
-                  onChange={e => handleNotesChange(index, e.target.value)}
+                  onChange={(e) => handleNotesChange(index, e.target.value)}
                   placeholder="Add notes or feedback..."
                   maxLength={500}
                   disabled={disabled}

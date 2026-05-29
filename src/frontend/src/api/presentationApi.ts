@@ -12,27 +12,35 @@ export interface CreatePresentationRequest {
   description: string;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export const presentationApi = {
   getPresentations: async (): Promise<Presentation[]> => {
     const res = await fetch(`${API_BASE}/api/presentations`);
-    if (!res.ok) throw new Error('Failed to fetch presentations');
+    if (!res.ok) throw new Error("Failed to fetch presentations");
     return res.json();
   },
 
-  createPresentation: async (request: CreatePresentationRequest): Promise<Presentation> => {
+  createPresentation: async (
+    request: CreatePresentationRequest,
+  ): Promise<Presentation> => {
     const res = await fetch(`${API_BASE}/api/presentations`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify(request),
+      credentials: "include",
     });
-    if (!res.ok) throw new Error('Failed to create presentation');
+    if (res.status === 401) throw new Error("Unauthorized");
+    if (!res.ok) throw new Error("Failed to create presentation");
     return res.json();
   },
 
   deletePresentation: async (id: string): Promise<void> => {
-    const res = await fetch(`${API_BASE}/api/presentations/${id}`, { method: 'DELETE' });
-    if (!res.ok) throw new Error('Failed to delete presentation');
+    const res = await fetch(`${API_BASE}/api/presentations/${id}`, {
+      method: "DELETE",
+      credentials: "include",
+    });
+    if (res.status === 401) throw new Error("Unauthorized");
+    if (!res.ok) throw new Error("Failed to delete presentation");
   },
 };

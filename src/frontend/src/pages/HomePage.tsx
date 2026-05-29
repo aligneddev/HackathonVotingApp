@@ -1,5 +1,5 @@
-import { Link } from 'react-router-dom';
-import { motion } from 'framer-motion';
+import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 
 export default function HomePage() {
   return (
@@ -27,10 +27,38 @@ export default function HomePage() {
               transform={`rotate(${angle} 60 60)`}
             />
           ))}
-          <line x1="10" y1="60" x2="32" y2="60" stroke="#818cf8" strokeWidth="2" />
-          <line x1="88" y1="60" x2="110" y2="60" stroke="#818cf8" strokeWidth="2" />
-          <line x1="60" y1="10" x2="60" y2="32" stroke="#818cf8" strokeWidth="2" />
-          <line x1="60" y1="88" x2="60" y2="110" stroke="#818cf8" strokeWidth="2" />
+          <line
+            x1="10"
+            y1="60"
+            x2="32"
+            y2="60"
+            stroke="#818cf8"
+            strokeWidth="2"
+          />
+          <line
+            x1="88"
+            y1="60"
+            x2="110"
+            y2="60"
+            stroke="#818cf8"
+            strokeWidth="2"
+          />
+          <line
+            x1="60"
+            y1="10"
+            x2="60"
+            y2="32"
+            stroke="#818cf8"
+            strokeWidth="2"
+          />
+          <line
+            x1="60"
+            y1="88"
+            x2="60"
+            y2="110"
+            stroke="#818cf8"
+            strokeWidth="2"
+          />
           <circle cx="10" cy="60" r="3" fill="#818cf8" />
           <circle cx="110" cy="60" r="3" fill="#818cf8" />
           <circle cx="60" cy="10" r="3" fill="#818cf8" />
@@ -80,4 +108,3 @@ export default function HomePage() {
     </div>
   );
 }
-

@@ -1,12 +1,12 @@
-import { render, screen, waitFor } from '@testing-library/react';
-import userEvent from '@testing-library/user-event';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { MemoryRouter } from 'react-router-dom';
-import AdminPage from '../pages/AdminPage';
-import * as presentationApiModule from '../api/presentationApi';
-import * as adminVotingApiModule from '../api/adminVotingApi';
+import { render, screen, waitFor } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { MemoryRouter } from "react-router-dom";
+import AdminPage from "../pages/AdminPage";
+import * as presentationApiModule from "../api/presentationApi";
+import * as adminVotingApiModule from "../api/adminVotingApi";
 
-vi.mock('../api/presentationApi', () => ({
+vi.mock("../api/presentationApi", () => ({
   presentationApi: {
     getPresentations: vi.fn(),
     createPresentation: vi.fn(),
@@ -14,7 +14,7 @@ vi.mock('../api/presentationApi', () => ({
   },
 }));
 
-vi.mock('../api/adminVotingApi', () => ({
+vi.mock("../api/adminVotingApi", () => ({
   adminVotingApi: {
     getVotingState: vi.fn(),
     startVoting: vi.fn(),
@@ -34,53 +34,93 @@ const mockVotingApi = adminVotingApiModule.adminVotingApi as {
   endVoting: ReturnType<typeof vi.fn>;
 };
 
-describe('AdminPage', () => {
+describe("AdminPage", () => {
   beforeEach(() => {
     vi.clearAllMocks();
-    mockVotingApi.getVotingState.mockResolvedValue({ isOpen: true, updatedAt: new Date().toISOString() });
+    mockVotingApi.getVotingState.mockResolvedValue({
+      isOpen: true,
+      updatedAt: new Date().toISOString(),
+    });
   });
 
-  it('renders_presentations_heading', async () => {
+  it("renders_presentations_heading", async () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>,
+    );
     await screen.findByText(/no presentations yet/i);
-    const heading = screen.getByRole('heading', { name: /presentations/i });
+    const heading = screen.getByRole("heading", { name: /presentations/i });
     expect(heading).toBeInTheDocument();
   });
 
-  it('renders_add_presentation_button', async () => {
+  it("renders_add_presentation_button", async () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>,
+    );
     await screen.findByText(/no presentations yet/i);
-    const button = screen.getByRole('button', { name: /add presentation/i });
+    const button = screen.getByRole("button", { name: /add presentation/i });
     expect(button).toBeInTheDocument();
   });
 
-  it('renders_presentation_list_after_fetch', async () => {
+  it("renders_presentation_list_after_fetch", async () => {
     const mockPresentations = [
-      { id: '1', title: 'Amazing Demo', presenterName: 'Jane Dev', description: '', createdAt: new Date().toISOString() },
+      {
+        id: "1",
+        title: "Amazing Demo",
+        presenterName: "Jane Dev",
+        description: "",
+        createdAt: new Date().toISOString(),
+      },
     ];
     mockApi.getPresentations.mockResolvedValueOnce(mockPresentations);
-    render(<MemoryRouter><AdminPage /></MemoryRouter>);
-    await waitFor(() => { expect(screen.getByText('Amazing Demo')).toBeInTheDocument(); });
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>,
+    );
+    await waitFor(() => {
+      expect(screen.getByText("Amazing Demo")).toBeInTheDocument();
+    });
   });
 
-  it('renders_voting_controls', async () => {
+  it("renders_voting_controls", async () => {
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>,
+    );
 
-    expect(await screen.findByRole('button', { name: /start voting/i })).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /end voting/i })).toBeInTheDocument();
+    expect(
+      await screen.findByRole("button", { name: /start voting/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: /end voting/i }),
+    ).toBeInTheDocument();
   });
 
-  it('clicking_end_voting_calls_end_endpoint', async () => {
+  it("clicking_end_voting_calls_end_endpoint", async () => {
     const user = userEvent.setup();
     mockApi.getPresentations.mockResolvedValueOnce([]);
-    mockVotingApi.endVoting.mockResolvedValueOnce({ isOpen: false, updatedAt: new Date().toISOString() });
+    mockVotingApi.endVoting.mockResolvedValueOnce({
+      isOpen: false,
+      updatedAt: new Date().toISOString(),
+    });
 
-    render(<MemoryRouter><AdminPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <AdminPage />
+      </MemoryRouter>,
+    );
 
-    const endButton = await screen.findByRole('button', { name: /end voting/i });
+    const endButton = await screen.findByRole("button", {
+      name: /end voting/i,
+    });
     await user.click(endButton);
 
     expect(mockVotingApi.endVoting).toHaveBeenCalledTimes(1);

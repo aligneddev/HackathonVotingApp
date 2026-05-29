@@ -1,17 +1,27 @@
-import { BrowserRouter, Routes, Route, Outlet, NavLink } from 'react-router-dom';
-import HomePage from './pages/HomePage';
-import AdminPage from './pages/AdminPage';
-import AdminResultsPage from './pages/AdminResultsPage';
-import AdminVotesPage from './pages/AdminVotesPage';
-import LeaderboardPage from './pages/LeaderboardPage';
-import VotingPage from './pages/VotingPage';
-import ResultsPage from './pages/ResultsPage';
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Outlet,
+  NavLink,
+  useNavigate,
+} from "react-router-dom";
+import HomePage from "./pages/HomePage";
+import AdminPage from "./pages/AdminPage";
+import AdminLoginPage from "./pages/AdminLoginPage";
+import AdminResultsPage from "./pages/AdminResultsPage";
+import AdminVotesPage from "./pages/AdminVotesPage";
+import LeaderboardPage from "./pages/LeaderboardPage";
+import VotingPage from "./pages/VotingPage";
+import ResultsPage from "./pages/ResultsPage";
+import AdminAuthGuard from "./components/AdminAuthGuard";
+import { adminAuthApi } from "./api/adminAuthApi";
 
 function linkClassName({ isActive }: { isActive: boolean }) {
   return [
-    'text-sm font-medium transition-colors',
-    isActive ? 'text-indigo-400' : 'text-gray-400 hover:text-indigo-400',
-  ].join(' ');
+    "text-sm font-medium transition-colors",
+    isActive ? "text-indigo-400" : "text-gray-400 hover:text-indigo-400",
+  ].join(" ");
 }
 
 function PublicLayout() {
@@ -36,10 +46,20 @@ function PublicLayout() {
 }
 
 function AdminLayout() {
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await adminAuthApi.logout();
+    } finally {
+      navigate("/admin/login");
+    }
+  };
+
   return (
     <>
       <nav className="bg-gray-900 border-b border-gray-800 px-4 py-3">
-        <div className="max-w-4xl mx-auto flex gap-6">
+        <div className="max-w-4xl mx-auto flex gap-6 items-center">
           <NavLink to="/admin" end className={linkClassName}>
             Presentations
           </NavLink>
@@ -52,6 +72,12 @@ function AdminLayout() {
           <NavLink to="/" className={linkClassName}>
             Public Site
           </NavLink>
+          <button
+            onClick={handleLogout}
+            className="ml-auto text-sm font-medium text-gray-400 hover:text-indigo-400 transition-colors"
+          >
+            Logout
+          </button>
         </div>
       </nav>
       <Outlet />
@@ -69,10 +95,13 @@ export default function App() {
           <Route path="/vote" element={<VotingPage />} />
           <Route path="/results" element={<ResultsPage />} />
         </Route>
-        <Route path="/admin" element={<AdminLayout />}>
-          <Route index element={<AdminPage />} />
-          <Route path="results" element={<AdminResultsPage />} />
-          <Route path="votes" element={<AdminVotesPage />} />
+        <Route path="/admin/login" element={<AdminLoginPage />} />
+        <Route element={<AdminAuthGuard />}>
+          <Route path="/admin" element={<AdminLayout />}>
+            <Route index element={<AdminPage />} />
+            <Route path="results" element={<AdminResultsPage />} />
+            <Route path="votes" element={<AdminVotesPage />} />
+          </Route>
         </Route>
       </Routes>
     </BrowserRouter>

@@ -15,16 +15,51 @@ const mockApi = leaderboardApiModule.leaderboardApi as {
 };
 
 const fiveEntries = [
-  { id: "id-1", title: "Force Awakens App", presenterName: "Luke Skywalker", voteCount: 42 },
-  { id: "id-2", title: "Rebel Alliance Dashboard", presenterName: "Leia Organa", voteCount: 35 },
-  { id: "id-3", title: "Millennium Falcon Tracker", presenterName: "Han Solo", voteCount: 28 },
-  { id: "id-4", title: "Droid Inventory", presenterName: "C-3PO", voteCount: 15 },
-  { id: "id-5", title: "Jedi Archives Search", presenterName: "Obi-Wan Kenobi", voteCount: 9 },
+  {
+    id: "id-1",
+    title: "Force Awakens App",
+    presenterName: "Luke Skywalker",
+    voteCount: 42,
+  },
+  {
+    id: "id-2",
+    title: "Rebel Alliance Dashboard",
+    presenterName: "Leia Organa",
+    voteCount: 35,
+  },
+  {
+    id: "id-3",
+    title: "Millennium Falcon Tracker",
+    presenterName: "Han Solo",
+    voteCount: 28,
+  },
+  {
+    id: "id-4",
+    title: "Droid Inventory",
+    presenterName: "C-3PO",
+    voteCount: 15,
+  },
+  {
+    id: "id-5",
+    title: "Jedi Archives Search",
+    presenterName: "Obi-Wan Kenobi",
+    voteCount: 9,
+  },
 ];
 
 const twoEntries = [
-  { id: "id-1", title: "Force Awakens App", presenterName: "Luke Skywalker", voteCount: 42 },
-  { id: "id-2", title: "Rebel Alliance Dashboard", presenterName: "Leia Organa", voteCount: 35 },
+  {
+    id: "id-1",
+    title: "Force Awakens App",
+    presenterName: "Luke Skywalker",
+    voteCount: 42,
+  },
+  {
+    id: "id-2",
+    title: "Rebel Alliance Dashboard",
+    presenterName: "Leia Organa",
+    voteCount: 35,
+  },
 ];
 
 describe("ResultsPage", () => {
@@ -36,7 +71,11 @@ describe("ResultsPage", () => {
     // Never-resolving promise simulates in-flight request
     mockApi.getLeaderboard.mockReturnValue(new Promise(() => {}));
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     expect(screen.getByText(/loading/i)).toBeInTheDocument();
   });
@@ -44,17 +83,27 @@ describe("ResultsPage", () => {
   it("renders a Results heading", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
-      expect(screen.getByRole("heading", { name: /results/i })).toBeInTheDocument();
+      expect(
+        screen.getByRole("heading", { name: /results/i }),
+      ).toBeInTheDocument();
     });
   });
 
   it("renders prize labels only for top 3 when 5 entries returned", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/🥇/)).toBeInTheDocument();
@@ -70,7 +119,11 @@ describe("ResultsPage", () => {
   it("renders the correct prize labels: 1st Place, 2nd Place, 3rd Place", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/1st place/i)).toBeInTheDocument();
@@ -82,7 +135,11 @@ describe("ResultsPage", () => {
   it("renders titles for ALL entries", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Force Awakens App")).toBeInTheDocument();
@@ -96,7 +153,11 @@ describe("ResultsPage", () => {
   it("renders presenterName for ALL entries", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Luke Skywalker")).toBeInTheDocument();
@@ -110,7 +171,11 @@ describe("ResultsPage", () => {
   it("renders entries 4 and 5 WITHOUT prize labels", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       // Entries 4 and 5 ARE rendered (not filtered out)
@@ -127,7 +192,11 @@ describe("ResultsPage", () => {
   it("renders only 2 prize cards when fewer than 3 entries exist", async () => {
     mockApi.getLeaderboard.mockResolvedValue(twoEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/🥇/)).toBeInTheDocument();
@@ -139,7 +208,11 @@ describe("ResultsPage", () => {
   it("renders no prize cards when the leaderboard is empty", async () => {
     mockApi.getLeaderboard.mockResolvedValue([]);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.queryByText(/🥇/)).not.toBeInTheDocument();
@@ -151,7 +224,11 @@ describe("ResultsPage", () => {
   it("calls the leaderboard API exactly once on mount and never again", async () => {
     mockApi.getLeaderboard.mockResolvedValue(fiveEntries);
 
-    render(<MemoryRouter><ResultsPage /></MemoryRouter>);
+    render(
+      <MemoryRouter>
+        <ResultsPage />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText(/1st place/i)).toBeInTheDocument();

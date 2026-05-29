@@ -1,18 +1,19 @@
-import { useEffect, useState } from 'react';
-import { leaderboardApi, LeaderboardEntry } from '../api/leaderboardApi';
+import { useEffect, useState } from "react";
+import { leaderboardApi, LeaderboardEntry } from "../api/leaderboardApi";
 
 const PRIZES = [
-  { medal: '🥇', label: '1st Place' },
-  { medal: '🥈', label: '2nd Place' },
-  { medal: '🥉', label: '3rd Place' },
+  { medal: "🥇", label: "1st Place" },
+  { medal: "🥈", label: "2nd Place" },
+  { medal: "🥉", label: "3rd Place" },
 ];
 
 export default function ResultsPage() {
   const [entries, setEntries] = useState<LeaderboardEntry[] | null>(null);
 
   useEffect(() => {
-    leaderboardApi.getLeaderboard()
-      .then(data => setEntries(data))
+    leaderboardApi
+      .getLeaderboard()
+      .then((data) => setEntries(data))
       .catch(() => setEntries([]));
   }, []);
 
@@ -46,8 +47,12 @@ export default function ResultsPage() {
                     </span>
                   )}
                   <div className="flex-1 min-w-0">
-                    <h2 className="font-semibold text-gray-100">{entry.title}</h2>
-                    <p className="text-sm text-indigo-300 mt-1">{entry.presenterName}</p>
+                    <h2 className="font-semibold text-gray-100">
+                      {entry.title}
+                    </h2>
+                    <p className="text-sm text-indigo-300 mt-1">
+                      {entry.presenterName}
+                    </p>
                   </div>
                 </li>
               );

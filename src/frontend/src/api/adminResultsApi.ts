@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export interface VoteNote {
   notes: string;
@@ -21,7 +21,10 @@ export interface AdminResultEntry {
 
 export const adminResultsApi = {
   getResults: async (): Promise<AdminResultEntry[]> => {
-    const res = await fetch(`${API_BASE}/api/admin/results`);
+    const res = await fetch(`${API_BASE}/api/admin/results`, {
+      credentials: "include",
+    });
+    if (res.status === 401) throw new Error("Unauthorized");
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     return res.json();
   },

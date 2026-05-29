@@ -1,5 +1,9 @@
+using System.Security.Cryptography;
+using System.Text;
 using HackathonVotingApp.Api.Data;
+using HackathonVotingApp.Api.Models;
 using HackathonVotingApp.Api.Services;
+using Microsoft.AspNetCore.DataProtection;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -22,12 +26,22 @@ if (allowedOrigins.Length > 0)
     {
         options.AddPolicy(
             "FrontendCors",
-            policy => policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod()
+            policy =>
+                policy
+                    .WithOrigins(allowedOrigins)
+                    .AllowAnyHeader()
+                    .AllowAnyMethod()
+                    .AllowCredentials()
         );
     });
 }
 
 builder.Services.AddEndpointsApiExplorer();
+var dataProtectionBuilder = builder.Services
+    .AddDataProtection()
+    .SetApplicationName("HackathonVotingApp");
+if (builder.Environment.IsProduction())
+    dataProtectionBuilder.PersistKeysToFileSystem(new DirectoryInfo("/home/site/keys"));
 
 var sqlConnectionString = builder.Configuration.GetConnectionString("DefaultConnection");
 if (!string.IsNullOrEmpty(sqlConnectionString))
@@ -59,7 +73,94 @@ if (allowedOrigins.Length > 0)
     app.UseCors("FrontendCors");
 }
 
+var dataProtector = app
+    .Services.GetRequiredService<IDataProtectionProvider>()
+    .CreateProtector("AdminAuth");
+var adminPassword = app.Configuration["AdminPassword"];
+var isProduction = app.Environment.IsProduction();
+
+if (isProduction && string.IsNullOrEmpty(adminPassword))
+    throw new InvalidOperationException(
+        "ADMIN_PASSWORD environment variable is required in production"
+    );
+
+const string AdminAuthCookieName = "admin_auth";
+const string AdminAuthValue = "admin:authenticated";
+
+bool IsAuthenticated(HttpContext ctx)
+{
+    var cookie = ctx.Request.Cookies[AdminAuthCookieName];
+    if (cookie is null)
+        return false;
+    try
+    {
+        return dataProtector.Unprotect(cookie) == AdminAuthValue;
+    }
+    catch (Exception ex)
+    {
+        app.Logger.LogDebug(ex, "Failed to unprotect admin auth cookie");
+        return false;
+    }
+}
+
 app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
+
+app.MapPost(
+    "/api/admin/login",
+    (LoginRequest req, HttpContext ctx) =>
+    {
+        if (string.IsNullOrEmpty(adminPassword))
+            return Results.StatusCode(401);
+
+        var providedBytes = Encoding.UTF8.GetBytes(req.Password ?? "");
+        var adminBytes = Encoding.UTF8.GetBytes(adminPassword);
+        if (!CryptographicOperations.FixedTimeEquals(providedBytes, adminBytes))
+        {
+            app.Logger.LogWarning(
+                "Failed admin login attempt from {IP}",
+                ctx.Connection.RemoteIpAddress
+            );
+            return Results.StatusCode(401);
+        }
+
+        var token = dataProtector.Protect(AdminAuthValue);
+        ctx.Response.Cookies.Append(
+            AdminAuthCookieName,
+            token,
+            new CookieOptions
+            {
+                HttpOnly = true,
+                Secure = isProduction,
+                SameSite = isProduction ? SameSiteMode.None : SameSiteMode.Lax,
+                Path = "/",
+            }
+        );
+        return Results.Ok();
+    }
+);
+
+app.MapPost(
+    "/api/admin/logout",
+    (HttpContext ctx) =>
+    {
+        ctx.Response.Cookies.Delete(
+            AdminAuthCookieName,
+            new CookieOptions
+            {
+                Path = "/",
+                HttpOnly = true,
+                Secure = isProduction,
+                SameSite = isProduction ? SameSiteMode.None : SameSiteMode.Lax,
+            }
+        );
+        return Results.Ok();
+    }
+);
+
+app.MapGet(
+    "/api/admin/auth-status",
+    (HttpContext ctx) => Results.Ok(new { authenticated = IsAuthenticated(ctx) })
+);
 
 var presentations = app.MapGroup("/api/presentations");
 
@@ -154,7 +255,13 @@ app.MapGet(
     async (ILeaderboardService svc) => Results.Ok(await svc.GetLeaderboardAsync())
 );
 
-var admin = app.MapGroup("/api/admin");
+var admin = app.MapGroup("/api/admin")
+    .AddEndpointFilter(async (ctx, next) =>
+    {
+        if (!IsAuthenticated(ctx.HttpContext))
+            return Results.StatusCode(401);
+        return await next(ctx);
+    });
 
 admin.MapGet(
     "/results",

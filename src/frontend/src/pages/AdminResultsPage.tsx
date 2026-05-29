@@ -1,9 +1,9 @@
-import { useEffect, useState } from 'react';
-import { adminResultsApi, AdminResultEntry } from '../api/adminResultsApi';
+import { useEffect, useState } from "react";
+import { adminResultsApi, AdminResultEntry } from "../api/adminResultsApi";
 
 function formatAverage(value: number | null): string {
   if (value === null) {
-    return 'N/A';
+    return "N/A";
   }
 
   return value.toFixed(2);
@@ -11,12 +11,14 @@ function formatAverage(value: number | null): string {
 
 export default function AdminResultsPage() {
   const [entries, setEntries] = useState<AdminResultEntry[] | null>(null);
-  const [selectedEntry, setSelectedEntry] = useState<AdminResultEntry | null>(null);
+  const [selectedEntry, setSelectedEntry] = useState<AdminResultEntry | null>(
+    null,
+  );
 
   useEffect(() => {
     adminResultsApi
       .getResults()
-      .then(data => setEntries(data))
+      .then((data) => setEntries(data))
       .catch(() => setEntries([]));
   }, []);
 
@@ -32,7 +34,9 @@ export default function AdminResultsPage() {
     <main className="min-h-screen bg-gray-950 text-gray-100">
       <div className="max-w-4xl mx-auto p-4 md:p-8">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-indigo-400">Admin Vote Results</h1>
+          <h1 className="text-2xl font-bold text-indigo-400">
+            Admin Vote Results
+          </h1>
           <p className="text-sm text-gray-400 mt-2">
             Ranked by total weighted points with deterministic tie-breakers.
           </p>
@@ -49,9 +53,15 @@ export default function AdminResultsPage() {
               >
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-xs uppercase tracking-wide text-gray-500">Rank #{index + 1}</p>
-                    <h2 className="text-lg font-semibold text-gray-100 mt-1">{entry.title}</h2>
-                    <p className="text-sm text-indigo-300 mt-1">{entry.presenterName}</p>
+                    <p className="text-xs uppercase tracking-wide text-gray-500">
+                      Rank #{index + 1}
+                    </p>
+                    <h2 className="text-lg font-semibold text-gray-100 mt-1">
+                      {entry.title}
+                    </h2>
+                    <p className="text-sm text-indigo-300 mt-1">
+                      {entry.presenterName}
+                    </p>
                   </div>
                   <button
                     type="button"
@@ -77,16 +87,28 @@ export default function AdminResultsPage() {
 
                 <div className="mt-4 grid grid-cols-2 md:grid-cols-3 gap-3">
                   <div className="bg-gray-800/70 rounded-lg p-3">
-                    <p className="text-xs uppercase text-gray-500">Total Points</p>
-                    <p className="text-xl font-bold text-indigo-300 mt-1">{entry.totalPoints}</p>
+                    <p className="text-xs uppercase text-gray-500">
+                      Total Points
+                    </p>
+                    <p className="text-xl font-bold text-indigo-300 mt-1">
+                      {entry.totalPoints}
+                    </p>
                   </div>
                   <div className="bg-gray-800/70 rounded-lg p-3">
-                    <p className="text-xs uppercase text-gray-500">Vote Count</p>
-                    <p className="text-xl font-bold text-gray-100 mt-1">{entry.voteCount}</p>
+                    <p className="text-xs uppercase text-gray-500">
+                      Vote Count
+                    </p>
+                    <p className="text-xl font-bold text-gray-100 mt-1">
+                      {entry.voteCount}
+                    </p>
                   </div>
                   <div className="bg-gray-800/70 rounded-lg p-3">
-                    <p className="text-xs uppercase text-gray-500">Average Points</p>
-                    <p className="text-xl font-bold text-gray-100 mt-1">{formatAverage(entry.averagePoints)}</p>
+                    <p className="text-xs uppercase text-gray-500">
+                      Average Points
+                    </p>
+                    <p className="text-xl font-bold text-gray-100 mt-1">
+                      {formatAverage(entry.averagePoints)}
+                    </p>
                   </div>
                 </div>
               </section>
@@ -105,8 +127,12 @@ export default function AdminResultsPage() {
           <div className="w-full max-w-lg bg-gray-900 border border-gray-700 rounded-xl p-5">
             <div className="flex items-start justify-between gap-4">
               <div>
-                <h2 className="text-lg font-semibold text-indigo-300">Vote Notes</h2>
-                <p className="text-sm text-gray-400 mt-1">{selectedEntry.title}</p>
+                <h2 className="text-lg font-semibold text-indigo-300">
+                  Vote Notes
+                </h2>
+                <p className="text-sm text-gray-400 mt-1">
+                  {selectedEntry.title}
+                </p>
               </div>
               <button
                 type="button"
@@ -119,15 +145,21 @@ export default function AdminResultsPage() {
 
             <div className="mt-4 max-h-80 overflow-y-auto pr-1 space-y-3">
               {selectedEntry.notes.length === 0 ? (
-                <p className="text-sm text-gray-500">No notes submitted for this presentation.</p>
+                <p className="text-sm text-gray-500">
+                  No notes submitted for this presentation.
+                </p>
               ) : (
                 selectedEntry.notes.map((note, index) => (
                   <article
                     key={`${selectedEntry.id}-note-${index}`}
                     className="bg-gray-800 border border-gray-700 rounded-lg p-3"
                   >
-                    <p className="text-xs uppercase text-gray-500">Ranking {note.ranking}</p>
-                    <p className="text-sm text-gray-200 mt-1 whitespace-pre-wrap">{note.notes}</p>
+                    <p className="text-xs uppercase text-gray-500">
+                      Ranking {note.ranking}
+                    </p>
+                    <p className="text-sm text-gray-200 mt-1 whitespace-pre-wrap">
+                      {note.notes}
+                    </p>
                   </article>
                 ))
               )}

@@ -7,7 +7,7 @@ export interface LeaderboardEntry {
   averagePoints: number | null;
 }
 
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export const leaderboardApi = {
   getLeaderboard: async (): Promise<LeaderboardEntry[]> => {

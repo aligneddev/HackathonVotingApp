@@ -1,4 +1,4 @@
-const API_BASE = import.meta.env.VITE_API_BASE_URL ?? '';
+const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "";
 
 export interface BallotEntry {
   presentationId: string;
@@ -13,20 +13,23 @@ export class BallotError extends Error {
     public readonly status: number,
   ) {
     super(message);
-    this.name = 'BallotError';
+    this.name = "BallotError";
   }
 }
 
 export const votingApi = {
-  castBallot: async (voterAliasToken: string, entries: BallotEntry[]): Promise<void> => {
+  castBallot: async (
+    voterAliasToken: string,
+    entries: BallotEntry[],
+  ): Promise<void> => {
     const res = await fetch(`${API_BASE}/api/votes/ballots`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ voterAliasToken, entries }),
     });
 
     if (!res.ok) {
-      let code = 'Unknown';
+      let code = "Unknown";
       let message = `Failed to submit ballot: ${res.status}`;
       try {
         const body = await res.json();
