@@ -67,6 +67,41 @@ Then visit `http://localhost:5173` in your browser.
 
 ---
 
+## Admin Authentication
+
+All `/api/admin/*` routes are protected by a password stored in the `AdminPassword` configuration key. The password is validated on every request via an HttpOnly encrypted cookie.
+
+### Local Development
+
+`appsettings.Development.json` ships with a default password so it works out of the box:
+
+```json
+{
+  "AdminPassword": "dev-password"
+}
+```
+
+To use a different local password without committing it:
+
+```bash
+cd src/HackathonVotingApp.Api
+dotnet user-secrets set "AdminPassword" "my-local-password"
+```
+
+Then visit `http://localhost:5173/admin/login` and enter the password.
+
+### GitHub Actions / Production
+
+1. **Add the secret** in your GitHub repo → *Settings → Secrets and variables → Actions*:
+   - `ADMIN_PASSWORD` — used for the `dev` environment (auto-deployed on every push to `main`)
+   - `ADMIN_PASSWORD_PROD` — used for the `prod` environment (manual dispatch only)
+
+2. The CI/CD workflow (`ci.yml`) automatically pushes these secrets to the App Service as application settings after each deployment. No additional steps required.
+
+> ⚠️ The API will **throw at startup** in production if `ADMIN_PASSWORD` is not set — this is intentional to prevent silent lockout.
+
+---
+
 ## Testing
 
 ### Backend Tests

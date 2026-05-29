@@ -157,10 +157,14 @@ jobs:
           app-name: ${{ needs.deploy-infra-dev.outputs.webAppName }}
           package: ./api.zip
 
-      - name: Smoke Test API
+      - name: Configure Admin Password
         run: |
-          curl --fail --retry 12 --retry-delay 5 --retry-connrefused \
-            "${{ needs.deploy-infra-dev.outputs.apiUrl }}/api/health"
+          az webapp config appsettings set \
+            --name ${{ needs.deploy-infra-dev.outputs.webAppName }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD }}
+
+      - name: Smoke Test API
 
   deploy-frontend-dev:
     name: Deploy Dev — React Frontend → Static Web App
@@ -250,10 +254,14 @@ jobs:
           app-name: ${{ needs.deploy-infra-prod.outputs.webAppName }}
           package: ./api.zip
 
-      - name: Smoke Test API
+      - name: Configure Admin Password
         run: |
-          curl --fail --retry 12 --retry-delay 5 --retry-connrefused \
-            "${{ needs.deploy-infra-prod.outputs.apiUrl }}/api/health"
+          az webapp config appsettings set \
+            --name ${{ needs.deploy-infra-prod.outputs.webAppName }} \
+            --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD_PROD }}
+
+      - name: Smoke Test API
 
   deploy-frontend-prod:
     name: Deploy Prod — React Frontend → Static Web App
