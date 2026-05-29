@@ -1,11 +1,12 @@
 {
   "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+  "languageVersion": "2.0",
   "contentVersion": "1.0.0.0",
   "metadata": {
     "_generator": {
       "name": "bicep",
-      "version": "0.39.26.7824",
-      "templateHash": "16509601944199482904"
+      "version": "0.43.8.12551",
+      "templateHash": "11987807007404778481"
     }
   },
   "parameters": {
@@ -15,7 +16,11 @@
     },
     "environmentName": {
       "type": "string",
-      "defaultValue": "dev"
+      "defaultValue": "dev",
+      "allowedValues": [
+        "dev",
+        "prod"
+      ]
     },
     "appName": {
       "type": "string",
@@ -28,12 +33,22 @@
         "description": "SQL server administrator login used for initial bootstrap access."
       }
     },
+    "extraCorsOrigins": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "defaultValue": [],
+      "metadata": {
+        "description": "Additional CORS origins to allow beyond the deployed Static Web App (e.g. the other environment SWA URL)."
+      }
+    },
     "sqlAdminPassword": {
       "type": "securestring"
     }
   },
-  "resources": [
-    {
+  "resources": {
+    "sql": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "sql",
@@ -65,8 +80,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "4686764339718215847"
+              "version": "0.43.8.12551",
+              "templateHash": "3749569672378859194"
             }
           },
           "parameters": {
@@ -74,7 +89,11 @@
               "type": "string"
             },
             "environmentName": {
-              "type": "string"
+              "type": "string",
+              "allowedValues": [
+                "dev",
+                "prod"
+              ]
             },
             "appName": {
               "type": "string"
@@ -158,7 +177,7 @@
         }
       }
     },
-    {
+    "staticWebApp": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "staticWebApp",
@@ -184,8 +203,8 @@
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "15544611879576428287"
+              "version": "0.43.8.12551",
+              "templateHash": "358074521632840632"
             }
           },
           "parameters": {
@@ -193,7 +212,11 @@
               "type": "string"
             },
             "environmentName": {
-              "type": "string"
+              "type": "string",
+              "allowedValues": [
+                "dev",
+                "prod"
+              ]
             },
             "appName": {
               "type": "string"
@@ -236,7 +259,7 @@
         }
       }
     },
-    {
+    "appService": {
       "type": "Microsoft.Resources/deployments",
       "apiVersion": "2025-04-01",
       "name": "appService",
@@ -256,20 +279,21 @@
             "value": "[parameters('appName')]"
           },
           "sqlConnectionString": {
-            "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Persist Security Info=False;User ID={2};Password={3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', reference(resourceId('Microsoft.Resources/deployments', 'sql'), '2025-04-01').outputs.serverFqdn.value, reference(resourceId('Microsoft.Resources/deployments', 'sql'), '2025-04-01').outputs.databaseName.value, reference(resourceId('Microsoft.Resources/deployments', 'sql'), '2025-04-01').outputs.sqlAdminLogin.value, parameters('sqlAdminPassword'))]"
+            "value": "[format('Server=tcp:{0},1433;Initial Catalog={1};Persist Security Info=False;User ID={2};Password={3};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;', reference('sql').outputs.serverFqdn.value, reference('sql').outputs.databaseName.value, reference('sql').outputs.sqlAdminLogin.value, parameters('sqlAdminPassword'))]"
           },
-          "corsOrigin": {
-            "value": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'staticWebApp'), '2025-04-01').outputs.staticWebAppDefaultHostName.value)]"
+          "corsOrigins": {
+            "value": "[union(createArray(format('https://{0}', reference('staticWebApp').outputs.staticWebAppDefaultHostName.value)), parameters('extraCorsOrigins'))]"
           }
         },
         "template": {
           "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+          "languageVersion": "2.0",
           "contentVersion": "1.0.0.0",
           "metadata": {
             "_generator": {
               "name": "bicep",
-              "version": "0.39.26.7824",
-              "templateHash": "9036797344719139340"
+              "version": "0.43.8.12551",
+              "templateHash": "17618205435583295970"
             }
           },
           "parameters": {
@@ -277,7 +301,11 @@
               "type": "string"
             },
             "environmentName": {
-              "type": "string"
+              "type": "string",
+              "allowedValues": [
+                "dev",
+                "prod"
+              ]
             },
             "appName": {
               "type": "string"
@@ -285,17 +313,30 @@
             "sqlConnectionString": {
               "type": "securestring"
             },
-            "corsOrigin": {
-              "type": "string",
-              "defaultValue": ""
+            "corsOrigins": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "defaultValue": []
             }
           },
           "variables": {
+            "copy": [
+              {
+                "name": "corsOriginSettings",
+                "count": "[length(parameters('corsOrigins'))]",
+                "input": {
+                  "name": "[format('Cors__AllowedOrigins__{0}', copyIndex('corsOriginSettings'))]",
+                  "value": "[parameters('corsOrigins')[copyIndex('corsOriginSettings')]]"
+                }
+              }
+            ],
             "planName": "[format('{0}-{1}-plan', parameters('appName'), parameters('environmentName'))]",
             "webAppName": "[format('{0}-{1}-api', parameters('appName'), parameters('environmentName'))]"
           },
-          "resources": [
-            {
+          "resources": {
+            "appServicePlan": {
               "type": "Microsoft.Web/serverfarms",
               "apiVersion": "2024-11-01",
               "name": "[variables('planName')]",
@@ -309,7 +350,7 @@
                 "reserved": true
               }
             },
-            {
+            "webApp": {
               "type": "Microsoft.Web/sites",
               "apiVersion": "2024-11-01",
               "name": "[variables('webAppName')]",
@@ -319,16 +360,7 @@
                 "httpsOnly": true,
                 "siteConfig": {
                   "linuxFxVersion": "DOTNETCORE|10.0",
-                  "appSettings": [
-                    {
-                      "name": "ASPNETCORE_ENVIRONMENT",
-                      "value": "[if(equals(parameters('environmentName'), 'dev'), 'Development', 'Production')]"
-                    },
-                    {
-                      "name": "Cors__AllowedOrigins__0",
-                      "value": "[parameters('corsOrigin')]"
-                    }
-                  ],
+                  "appSettings": "[concat(createArray(createObject('name', 'ASPNETCORE_ENVIRONMENT', 'value', if(equals(parameters('environmentName'), 'dev'), 'Development', 'Production'))), variables('corsOriginSettings'))]",
                   "connectionStrings": [
                     {
                       "name": "DefaultConnection",
@@ -339,10 +371,10 @@
                 }
               },
               "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('planName'))]"
+                "appServicePlan"
               ]
             }
-          ],
+          },
           "outputs": {
             "webAppName": {
               "type": "string",
@@ -350,33 +382,33 @@
             },
             "webAppDefaultHostName": {
               "type": "string",
-              "value": "[reference(resourceId('Microsoft.Web/sites', variables('webAppName')), '2024-11-01').defaultHostName]"
+              "value": "[reference('webApp').defaultHostName]"
             }
           }
         }
       },
       "dependsOn": [
-        "[resourceId('Microsoft.Resources/deployments', 'sql')]",
-        "[resourceId('Microsoft.Resources/deployments', 'staticWebApp')]"
+        "sql",
+        "staticWebApp"
       ]
     }
-  ],
+  },
   "outputs": {
     "apiUrl": {
       "type": "string",
-      "value": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppDefaultHostName.value)]"
+      "value": "[format('https://{0}', reference('appService').outputs.webAppDefaultHostName.value)]"
     },
     "frontendUrl": {
       "type": "string",
-      "value": "[format('https://{0}', reference(resourceId('Microsoft.Resources/deployments', 'staticWebApp'), '2025-04-01').outputs.staticWebAppDefaultHostName.value)]"
+      "value": "[format('https://{0}', reference('staticWebApp').outputs.staticWebAppDefaultHostName.value)]"
     },
     "webAppName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'appService'), '2025-04-01').outputs.webAppName.value]"
+      "value": "[reference('appService').outputs.webAppName.value]"
     },
     "staticWebAppName": {
       "type": "string",
-      "value": "[reference(resourceId('Microsoft.Resources/deployments', 'staticWebApp'), '2025-04-01').outputs.staticWebAppName.value]"
+      "value": "[reference('staticWebApp').outputs.staticWebAppName.value]"
     }
   }
 }

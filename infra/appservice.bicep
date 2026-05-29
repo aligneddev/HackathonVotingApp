@@ -13,6 +13,10 @@ param corsOrigins string[] = []
 
 var planName = '${appName}-${environmentName}-plan'
 var webAppName = '${appName}-${environmentName}-api'
+var corsOriginSettings = [for (origin, i) in corsOrigins: {
+  name: 'Cors__AllowedOrigins__${i}'
+  value: origin
+}]
 
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: planName
@@ -35,17 +39,14 @@ resource webApp 'Microsoft.Web/sites@2024-11-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|10.0'
-      appSettings: union(
+      appSettings: concat(
         [
           {
             name: 'ASPNETCORE_ENVIRONMENT'
             value: environmentName == 'dev' ? 'Development' : 'Production'
           }
         ],
-        [for (origin, i) in corsOrigins: {
-          name: 'Cors__AllowedOrigins__${i}'
-          value: origin
-        }]
+        corsOriginSettings
       )
       connectionStrings: [
         {
