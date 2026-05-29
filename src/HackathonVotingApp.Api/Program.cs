@@ -162,6 +162,11 @@ admin.MapGet(
 );
 
 admin.MapGet(
+    "/votes",
+    async (IVotingService votingService) => Results.Ok(await votingService.GetAdminVotesAsync())
+);
+
+admin.MapGet(
     "/voting-state",
     async (IVotingService votingService) => Results.Ok(await votingService.GetVotingStateAsync())
 );

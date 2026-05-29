@@ -35,4 +35,18 @@ public record AdminVoteResultResponse(
     IReadOnlyList<VoteNoteResponse> Notes
 );
 
+public record AdminVoterBallotEntryResponse(
+    Guid PresentationId,
+    string PresentationTitle,
+    string PresenterName,
+    int Ranking,
+    string? Notes,
+    DateTimeOffset CreatedAt
+);
+
+public record AdminVoterBallotResponse(
+    string VoterAliasToken,
+    IReadOnlyList<AdminVoterBallotEntryResponse> Entries
+);
+
 public record VotingStateResponse(bool IsOpen, DateTimeOffset UpdatedAt);

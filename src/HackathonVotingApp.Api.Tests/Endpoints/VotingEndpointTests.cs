@@ -84,6 +84,29 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         await db.SaveChangesAsync();
     }
 
+    private static async Task SeedPresentationAsync(
+        string dbName,
+        Guid id,
+        string title,
+        string presenterName
+    )
+    {
+        var options = new DbContextOptionsBuilder<AppDbContext>()
+            .UseInMemoryDatabase(dbName)
+            .Options;
+
+        await using var db = new AppDbContext(options);
+        db.Presentations.Add(new Presentation
+        {
+            Id = id,
+            Title = title,
+            PresenterName = presenterName,
+            Description = string.Empty,
+            CreatedAt = DateTimeOffset.UtcNow,
+        });
+        await db.SaveChangesAsync();
+    }
+
     [Fact]
     public async Task SubmitBallot_WithCompleteTopFiveEntries_Returns201Created()
     {
@@ -101,7 +124,7 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
                 {
                     presentationId = presentationIds[0],
                     ranking = 1,
-                    notes = "Great idea",
+                    notes = (string?)"Great idea",
                 },
                 new
                 {
@@ -329,6 +352,84 @@ public class VotingEndpointTests : IClassFixture<WebApplicationFactory<Program>>
         // Assert
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
+
+    [Fact]
+    public async Task GetAdminVotes_ReturnsBallotsGroupedByVoter_WithEntriesOrderedByRanking()
+    {
+        // Arrange
+        var client = CreateClientWithFreshDb(out var dbName);
+
+        var presentationAId = Guid.NewGuid();
+        var presentationBId = Guid.NewGuid();
+        await SeedPresentationAsync(dbName, presentationAId, "Model Safety", "Ada");
+        await SeedPresentationAsync(dbName, presentationBId, "Platform Scale", "Linus");
+
+        await client.PostAsync("/api/admin/voting/start", null);
+
+        await SeedVotesAsync(
+            dbName,
+            new Vote
+            {
+                PresentationId = presentationAId,
+                SessionId = 2,
+                VoterAliasToken = "ALPHA-01",
+                NormalizedVoterAliasToken = "ALPHA-01",
+                Ranking = 2,
+                Notes = "Second pick",
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new Vote
+            {
+                PresentationId = presentationBId,
+                SessionId = 2,
+                VoterAliasToken = "ALPHA-01",
+                NormalizedVoterAliasToken = "ALPHA-01",
+                Ranking = 1,
+                Notes = "Top pick",
+                CreatedAt = DateTimeOffset.UtcNow,
+            },
+            new Vote
+            {
+                PresentationId = presentationAId,
+                SessionId = 2,
+                VoterAliasToken = "BETA-02",
+                NormalizedVoterAliasToken = "BETA-02",
+                Ranking = 1,
+                Notes = null,
+                CreatedAt = DateTimeOffset.UtcNow,
+            }
+        );
+
+        // Act
+        var response = await client.GetAsync("/api/admin/votes");
+        var body = await response.Content.ReadFromJsonAsync<List<AdminVoterBallotResponseDto>>();
+
+        // Assert
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        body.Should().NotBeNull();
+        body!.Count.Should().Be(2);
+
+        body[0].VoterAliasToken.Should().Be("ALPHA-01");
+        body[0].Entries.Select(e => e.Ranking).Should().ContainInOrder(1, 2);
+        body[0].Entries[0].PresentationTitle.Should().Be("Platform Scale");
+
+        body[1].VoterAliasToken.Should().Be("BETA-02");
+        body[1].Entries.Should().HaveCount(1);
+    }
+
+    private record AdminVoterBallotResponseDto(
+        string VoterAliasToken,
+        IReadOnlyList<AdminVoterBallotEntryResponseDto> Entries
+    );
+
+    private record AdminVoterBallotEntryResponseDto(
+        Guid PresentationId,
+        string PresentationTitle,
+        string PresenterName,
+        int Ranking,
+        string? Notes,
+        DateTimeOffset CreatedAt
+    );
 
     [Fact]
     public async Task SubmitBallot_WhenFewerThanFivePresentations_RequiresAllAvailable()

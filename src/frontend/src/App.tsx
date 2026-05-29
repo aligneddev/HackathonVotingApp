@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Outlet, NavLink } from 'react-router-dom'
 import HomePage from './pages/HomePage';
 import AdminPage from './pages/AdminPage';
 import AdminResultsPage from './pages/AdminResultsPage';
+import AdminVotesPage from './pages/AdminVotesPage';
 import LeaderboardPage from './pages/LeaderboardPage';
 import VotingPage from './pages/VotingPage';
 import ResultsPage from './pages/ResultsPage';
@@ -45,6 +46,9 @@ function AdminLayout() {
           <NavLink to="/admin/results" className={linkClassName}>
             Vote Results
           </NavLink>
+          <NavLink to="/admin/votes" className={linkClassName}>
+            Individual Votes
+          </NavLink>
           <NavLink to="/" className={linkClassName}>
             Public Site
           </NavLink>
@@ -68,6 +72,7 @@ export default function App() {
         <Route path="/admin" element={<AdminLayout />}>
           <Route index element={<AdminPage />} />
           <Route path="results" element={<AdminResultsPage />} />
+          <Route path="votes" element={<AdminVotesPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

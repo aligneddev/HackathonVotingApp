@@ -68,6 +68,12 @@ export default function AdminPage() {
             >
               View Vote Results
             </Link>
+            <Link
+              to="/admin/votes"
+              className="bg-gray-800 border border-gray-600 hover:border-indigo-500 text-gray-100 px-4 py-2 rounded-lg font-medium transition-colors"
+            >
+              View Individual Votes
+            </Link>
             <button
               onClick={() => setShowForm(s => !s)}
               className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg font-medium transition-colors"

@@ -203,6 +203,49 @@ public class VotingService(AppDbContext db) : IVotingService
             .ToList();
     }
 
+    public async Task<IReadOnlyList<AdminVoterBallotResponse>> GetAdminVotesAsync()
+    {
+        var votingState = await GetOrCreateVotingStateAsync();
+
+        var sessionVotes = await db
+            .Votes.Where(v => v.SessionId == votingState.CurrentSessionId)
+            .Join(
+                db.Presentations,
+                vote => vote.PresentationId,
+                presentation => presentation.Id,
+                (vote, presentation) => new
+                {
+                    vote.NormalizedVoterAliasToken,
+                    vote.PresentationId,
+                    presentation.Title,
+                    presentation.PresenterName,
+                    vote.Ranking,
+                    vote.Notes,
+                    vote.CreatedAt,
+                }
+            )
+            .ToListAsync();
+
+        return sessionVotes
+            .GroupBy(v => v.NormalizedVoterAliasToken)
+            .OrderBy(g => g.Key)
+            .Select(g => new AdminVoterBallotResponse(
+                g.Key,
+                g.OrderBy(v => v.Ranking)
+                    .ThenBy(v => v.PresentationId)
+                    .Select(v => new AdminVoterBallotEntryResponse(
+                        v.PresentationId,
+                        v.Title,
+                        v.PresenterName,
+                        v.Ranking,
+                        v.Notes,
+                        v.CreatedAt
+                    ))
+                    .ToList()
+            ))
+            .ToList();
+    }
+
     public async Task<VotingStateResponse> GetVotingStateAsync()
     {
         var state = await GetOrCreateVotingStateAsync();

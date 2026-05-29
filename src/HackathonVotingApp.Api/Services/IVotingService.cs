@@ -6,6 +6,7 @@ public interface IVotingService
 {
     Task<SubmitBallotResult> SubmitBallotAsync(SubmitBallotRequest request);
     Task<IReadOnlyList<AdminVoteResultResponse>> GetAdminResultsAsync();
+    Task<IReadOnlyList<AdminVoterBallotResponse>> GetAdminVotesAsync();
     Task<VotingStateResponse> GetVotingStateAsync();
     Task<VotingStateResponse> SetVotingStateAsync(bool isOpen);
 }
