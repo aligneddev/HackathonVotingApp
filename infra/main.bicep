@@ -11,6 +11,9 @@ param appName string = 'kl-hackathon-voting'
 @description('SQL server administrator login used for initial bootstrap access.')
 param sqlAdminLogin string = 'sqladmin'
 
+@description('Additional CORS origins to allow beyond the deployed Static Web App (e.g. the other environment SWA URL).')
+param extraCorsOrigins string[] = []
+
 @secure()
 param sqlAdminPassword string
 
@@ -41,7 +44,10 @@ module appService './appservice.bicep' = {
     environmentName: environmentName
     appName: appName
     sqlConnectionString: 'Server=tcp:${sql.outputs.serverFqdn},1433;Initial Catalog=${sql.outputs.databaseName};Persist Security Info=False;User ID=${sql.outputs.sqlAdminLogin};Password=${sqlAdminPassword};MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;'
-    corsOrigin: 'https://${staticWebApp.outputs.staticWebAppDefaultHostName}'
+    corsOrigins: union(
+      ['https://${staticWebApp.outputs.staticWebAppDefaultHostName}'],
+      extraCorsOrigins
+    )
   }
 }
 

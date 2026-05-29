@@ -9,7 +9,7 @@ param appName string
 @secure()
 param sqlConnectionString string
 
-param corsOrigin string = ''
+param corsOrigins string[] = []
 
 var planName = '${appName}-${environmentName}-plan'
 var webAppName = '${appName}-${environmentName}-api'
@@ -35,16 +35,18 @@ resource webApp 'Microsoft.Web/sites@2024-11-01' = {
     httpsOnly: true
     siteConfig: {
       linuxFxVersion: 'DOTNETCORE|10.0'
-      appSettings: [
-        {
-          name: 'ASPNETCORE_ENVIRONMENT'
-          value: environmentName == 'dev' ? 'Development' : 'Production'
-        }
-        {
-          name: 'Cors__AllowedOrigins__0'
-          value: corsOrigin
-        }
-      ]
+      appSettings: union(
+        [
+          {
+            name: 'ASPNETCORE_ENVIRONMENT'
+            value: environmentName == 'dev' ? 'Development' : 'Production'
+          }
+        ],
+        [for (origin, i) in corsOrigins: {
+          name: 'Cors__AllowedOrigins__${i}'
+          value: origin
+        }]
+      )
       connectionStrings: [
         {
           name: 'DefaultConnection'
