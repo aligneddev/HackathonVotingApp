@@ -1,10 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { presentationApi, Presentation } from "../api/presentationApi";
 import { votingApi, BallotError } from "../api/votingApi";
 import RankedVotingList, {
   RankedVotingListItem,
 } from "../components/RankedVotingList";
-import { adminVotingApi } from "../api/adminVotingApi";
+import { publicVotingApi } from "../api/publicVotingApi";
 
 function getSessionKey(presentations: Presentation[]): string {
   const ids = [...presentations]
@@ -25,6 +25,13 @@ function validateToken(token: string): string | null {
   return null;
 }
 
+function formatCountdown(secondsLeft: number): string {
+  if (secondsLeft <= 0) return "0:00";
+  const m = Math.floor(secondsLeft / 60);
+  const s = secondsLeft % 60;
+  return `${m}:${s.toString().padStart(2, "0")}`;
+}
+
 export default function VotingPage() {
   const [loading, setLoading] = useState(true);
   const [rankedItems, setRankedItems] = useState<RankedVotingListItem[]>([]);
@@ -33,23 +40,78 @@ export default function VotingPage() {
   const [error, setError] = useState<string | null>(null);
   const [isVotingOpen, setIsVotingOpen] = useState(true);
   const [voterAliasToken, setVoterAliasToken] = useState("");
+  const [currentPresentationTitle, setCurrentPresentationTitle] = useState<
+    string | null
+  >(null);
+  const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const requiredRankCount = Math.min(5, rankedItems.length);
+
+  const applyVotingState = (
+    state: Awaited<ReturnType<typeof publicVotingApi.getVotingState>>,
+  ) => {
+    setIsVotingOpen(state.isOpen);
+    setCurrentPresentationTitle(state.currentPresentationTitle);
+
+    if (countdownRef.current) {
+      clearInterval(countdownRef.current);
+      countdownRef.current = null;
+    }
+
+    if (state.presentationStartedAt) {
+      const endMs =
+        new Date(state.presentationStartedAt).getTime() +
+        state.durationMinutes * 60 * 1000;
+
+      const tick = () => {
+        const remaining = Math.max(
+          0,
+          Math.round((endMs - Date.now()) / 1000),
+        );
+        setSecondsLeft(remaining);
+        if (remaining <= 0 && countdownRef.current) {
+          clearInterval(countdownRef.current);
+          countdownRef.current = null;
+        }
+      };
+
+      tick();
+      countdownRef.current = setInterval(tick, 1000);
+    } else {
+      setSecondsLeft(null);
+    }
+  };
 
   useEffect(() => {
     Promise.all([
       presentationApi.getPresentations(),
-      adminVotingApi.getVotingState(),
+      publicVotingApi.getVotingState(),
     ])
       .then(([data, state]) => {
         if (localStorage.getItem(getSessionKey(data))) {
           setSubmitted(true);
         }
         setRankedItems(data.map((p) => ({ presentation: p, notes: "" })));
-        setIsVotingOpen(state.isOpen);
+        applyVotingState(state);
         setLoading(false);
       })
       .catch(() => setLoading(false));
+
+    const poll = setInterval(async () => {
+      try {
+        const state = await publicVotingApi.getVotingState();
+        applyVotingState(state);
+      } catch {
+        // ignore poll failures
+      }
+    }, 10_000);
+
+    return () => {
+      clearInterval(poll);
+      if (countdownRef.current) clearInterval(countdownRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleSubmit = async () => {
@@ -140,6 +202,30 @@ export default function VotingPage() {
             </span>
           )}
         </div>
+
+        {!loading && currentPresentationTitle && (
+          <div className="bg-indigo-950 border border-indigo-700 rounded-xl px-4 py-3 mb-4 flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-semibold text-indigo-400 uppercase tracking-wide mb-0.5">
+                Now presenting
+              </p>
+              <p className="text-base font-semibold text-indigo-100">
+                {currentPresentationTitle}
+              </p>
+            </div>
+            {secondsLeft !== null && (
+              <span
+                className={`text-2xl font-mono font-bold tabular-nums ${
+                  secondsLeft <= 60 ? "text-red-400" : "text-indigo-300"
+                }`}
+                aria-label={`${formatCountdown(secondsLeft)} remaining`}
+              >
+                {formatCountdown(secondsLeft)}
+              </span>
+            )}
+          </div>
+        )}
+
         <p className="text-gray-400 text-sm mb-6">
           Drag or use the arrows to rank in order of preference.
           {rankedItems.length > 5
@@ -149,7 +235,7 @@ export default function VotingPage() {
         </p>
         <p className="text-amber-300 text-sm mb-4">
           Enter a voter alias (3–32 characters, letters/numbers/spaces, e.g.
-          Team Rocket). Use the same alias if you need to re-enter.
+          Your Name). Use the same alias if you need to re-enter.
         </p>
 
         {loading ? (
@@ -194,7 +280,7 @@ export default function VotingPage() {
                 onChange={(e) => setVoterAliasToken(e.target.value)}
                 maxLength={32}
                 disabled={submitting}
-                placeholder="e.g. Team Rocket"
+                placeholder="e.g. Your Name"
                 className="w-full bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-gray-100 placeholder:text-gray-500 disabled:opacity-50 disabled:cursor-not-allowed"
               />
             </div>

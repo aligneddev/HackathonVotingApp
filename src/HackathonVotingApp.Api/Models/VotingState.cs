@@ -6,4 +6,6 @@ public class VotingState
     public int CurrentSessionId { get; set; } = 1;
     public bool IsOpen { get; set; } = false;
     public DateTimeOffset UpdatedAt { get; set; } = DateTimeOffset.UtcNow;
+    public Guid? CurrentPresentationId { get; set; }
+    public DateTimeOffset? PresentationStartedAt { get; set; }
 }

@@ -139,7 +139,7 @@ jobs:
       contents: read
     steps:
       - name: Download API artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: api
           path: .
@@ -162,7 +162,8 @@ jobs:
           az webapp config appsettings set \
             --name ${{ needs.deploy-infra-dev.outputs.webAppName }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD }}
+            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD }} \
+              "Presentation__DurationMinutes=${{ vars.PRESENTATION_DURATION_MINUTES || '10' }}"
 
       - name: Smoke Test API
         run: |
@@ -239,7 +240,7 @@ jobs:
       contents: read
     steps:
       - name: Download API artifact
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: api
           path: .
@@ -262,7 +263,8 @@ jobs:
           az webapp config appsettings set \
             --name ${{ needs.deploy-infra-prod.outputs.webAppName }} \
             --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD_PROD }}
+            --settings AdminPassword=${{ secrets.ADMIN_PASSWORD_PROD }} \
+              "Presentation__DurationMinutes=${{ vars.PRESENTATION_DURATION_MINUTES || '10' }}"
 
       - name: Smoke Test API
         run: |

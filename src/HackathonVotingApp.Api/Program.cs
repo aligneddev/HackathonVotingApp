@@ -78,6 +78,7 @@ var dataProtector = app
     .CreateProtector("AdminAuth");
 var adminPassword = app.Configuration["AdminPassword"];
 var isProduction = app.Environment.IsProduction();
+var presentationDurationMinutes = app.Configuration.GetValue<int>("Presentation:DurationMinutes", 10);
 
 if (isProduction && string.IsNullOrEmpty(adminPassword))
     throw new InvalidOperationException(
@@ -104,6 +105,12 @@ bool IsAuthenticated(HttpContext ctx)
 }
 
 app.MapGet("/api/health", () => Results.Ok(new { status = "healthy" }));
+
+app.MapGet(
+    "/api/voting-state",
+    async (IVotingService votingService) =>
+        Results.Ok(await votingService.GetPublicVotingStateAsync(presentationDurationMinutes))
+);
 
 app.MapPost(
     "/api/admin/login",
@@ -288,6 +295,15 @@ admin.MapPost(
     "/voting/end",
     async (IVotingService votingService) =>
         Results.Ok(await votingService.SetVotingStateAsync(false))
+);
+
+admin.MapPost(
+    "/presentation/start",
+    async (StartPresentationRequest request, IVotingService votingService) =>
+    {
+        var result = await votingService.StartPresentationAsync(request.PresentationId, presentationDurationMinutes);
+        return result is null ? Results.NotFound() : Results.Ok(result);
+    }
 );
 
 app.Run();

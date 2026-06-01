@@ -258,9 +258,53 @@ public class VotingService(AppDbContext db) : IVotingService
         if (isOpen && !state.IsOpen)
             state.CurrentSessionId += 1;
 
+        if (!isOpen)
+        {
+            state.CurrentPresentationId = null;
+            state.PresentationStartedAt = null;
+        }
+
         state.IsOpen = isOpen;
         state.UpdatedAt = DateTimeOffset.UtcNow;
         await db.SaveChangesAsync();
         return new VotingStateResponse(state.IsOpen, state.UpdatedAt);
+    }
+
+    public async Task<PublicVotingStateResponse> GetPublicVotingStateAsync(int durationMinutes)
+    {
+        var state = await GetOrCreateVotingStateAsync();
+        string? title = null;
+        if (state.CurrentPresentationId.HasValue)
+        {
+            var presentation = await db.Presentations.FindAsync(state.CurrentPresentationId.Value);
+            title = presentation?.Title;
+        }
+        return new PublicVotingStateResponse(
+            state.IsOpen,
+            state.CurrentPresentationId,
+            title,
+            state.PresentationStartedAt,
+            durationMinutes
+        );
+    }
+
+    public async Task<PublicVotingStateResponse?> StartPresentationAsync(Guid presentationId, int durationMinutes)
+    {
+        var presentation = await db.Presentations.FindAsync(presentationId);
+        if (presentation is null)
+            return null;
+
+        var state = await GetOrCreateVotingStateAsync();
+        state.CurrentPresentationId = presentationId;
+        state.PresentationStartedAt = DateTimeOffset.UtcNow;
+        await db.SaveChangesAsync();
+
+        return new PublicVotingStateResponse(
+            state.IsOpen,
+            presentationId,
+            presentation.Title,
+            state.PresentationStartedAt,
+            durationMinutes
+        );
     }
 }
