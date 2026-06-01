@@ -19,6 +19,7 @@ vi.mock("../api/adminVotingApi", () => ({
     getVotingState: vi.fn(),
     startVoting: vi.fn(),
     endVoting: vi.fn(),
+    startPresentation: vi.fn(),
   },
 }));
 
@@ -28,10 +29,11 @@ const mockApi = presentationApiModule.presentationApi as {
   deletePresentation: ReturnType<typeof vi.fn>;
 };
 
-const mockVotingApi = adminVotingApiModule.adminVotingApi as {
+const mockVotingApi = adminVotingApiModule.adminVotingApi as unknown as {
   getVotingState: ReturnType<typeof vi.fn>;
   startVoting: ReturnType<typeof vi.fn>;
   endVoting: ReturnType<typeof vi.fn>;
+  startPresentation: ReturnType<typeof vi.fn>;
 };
 
 describe("AdminPage", () => {
