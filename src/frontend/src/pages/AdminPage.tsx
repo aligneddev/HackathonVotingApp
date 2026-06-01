@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { presentationApi, Presentation } from "../api/presentationApi";
 import { adminVotingApi, VotingState } from "../api/adminVotingApi";
-
 export default function AdminPage() {
   const [presentations, setPresentations] = useState<Presentation[]>([]);
   const [loading, setLoading] = useState(true);
@@ -14,6 +13,12 @@ export default function AdminPage() {
   });
   const [votingState, setVotingState] = useState<VotingState | null>(null);
   const [isUpdatingVotingState, setIsUpdatingVotingState] = useState(false);
+  const [startingPresentationId, setStartingPresentationId] = useState<
+    string | null
+  >(null);
+  const [activePresentationId, setActivePresentationId] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     Promise.all([
@@ -58,8 +63,22 @@ export default function AdminPage() {
     try {
       await presentationApi.deletePresentation(id);
       setPresentations((prev) => prev.filter((p) => p.id !== id));
+      if (activePresentationId === id) setActivePresentationId(null);
     } catch {
       // deletion failed; keep item in list
+    }
+  };
+
+  const handleStartPresentation = async (id: string) => {
+    if (startingPresentationId) return;
+    setStartingPresentationId(id);
+    try {
+      await adminVotingApi.startPresentation(id);
+      setActivePresentationId(id);
+    } catch {
+      // start failed; ignore
+    } finally {
+      setStartingPresentationId(null);
     }
   };
 
@@ -209,13 +228,26 @@ export default function AdminPage() {
                     </p>
                   )}
                 </div>
-                <button
-                  onClick={() => handleDelete(p.id)}
-                  className="text-red-400 hover:text-red-300 text-sm shrink-0 transition-colors"
-                  aria-label={`Delete ${p.title}`}
-                >
-                  Delete
-                </button>
+                <div className="flex items-center gap-2 shrink-0">
+                  <button
+                    onClick={() => handleStartPresentation(p.id)}
+                    disabled={
+                      !!startingPresentationId ||
+                      activePresentationId === p.id
+                    }
+                    className="text-indigo-400 hover:text-indigo-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    aria-label={`Start presentation ${p.title}`}
+                  >
+                    {activePresentationId === p.id ? "▶ Active" : "▶ Start"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(p.id)}
+                    className="text-red-400 hover:text-red-300 text-sm transition-colors"
+                    aria-label={`Delete ${p.title}`}
+                  >
+                    Delete
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

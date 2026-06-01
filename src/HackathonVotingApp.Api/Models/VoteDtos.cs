@@ -50,3 +50,13 @@ public record AdminVoterBallotResponse(
 );
 
 public record VotingStateResponse(bool IsOpen, DateTimeOffset UpdatedAt);
+
+public record PublicVotingStateResponse(
+    bool IsOpen,
+    Guid? CurrentPresentationId,
+    string? CurrentPresentationTitle,
+    DateTimeOffset? PresentationStartedAt,
+    int DurationMinutes
+);
+
+public record StartPresentationRequest(Guid PresentationId);

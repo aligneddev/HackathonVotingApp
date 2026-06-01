@@ -9,4 +9,6 @@ public interface IVotingService
     Task<IReadOnlyList<AdminVoterBallotResponse>> GetAdminVotesAsync();
     Task<VotingStateResponse> GetVotingStateAsync();
     Task<VotingStateResponse> SetVotingStateAsync(bool isOpen);
+    Task<PublicVotingStateResponse> GetPublicVotingStateAsync(int durationMinutes);
+    Task<PublicVotingStateResponse?> StartPresentationAsync(Guid presentationId, int durationMinutes);
 }

@@ -40,6 +40,23 @@ Set these in repository Actions secrets.
 - `SQL_ADMIN_PASSWORD_PROD`
 - `AZURE_STATIC_WEB_APPS_API_TOKEN_PROD`
 
+### GitHub Variables (non-sensitive config)
+
+- `PRESENTATION_DURATION_MINUTES` — how long each presentation runs in minutes (default: `10` if not set). Controls the countdown timer shown to voters on the voting page.
+
+  Set this as a **repository variable** (not a secret):
+
+  ```bash
+  gh variable set PRESENTATION_DURATION_MINUTES --body "10"
+  ```
+
+  To set per environment instead:
+
+  ```bash
+  gh variable set PRESENTATION_DURATION_MINUTES --body "5" --env dev
+  gh variable set PRESENTATION_DURATION_MINUTES --body "10" --env prod
+  ```
+
 ## One-Time Azure Setup
 
 Run these once before deployments.
@@ -183,3 +200,22 @@ gh secret set AZURE_STATIC_WEB_APPS_API_TOKEN_PROD --body "$PROD_SWA_TOKEN"
 - Single resource group is intentional for now; environment isolation is by resource name.
 - App Service F1 is not ideal for production reliability. Upgrade to Basic/Standard when event load increases.
 - SQL serverless auto-pause (`autoPauseDelay: 60`) causes first-request cold start after idle periods.
+
+## Local Configuration
+
+Presentation duration is read by the API from `Presentation:DurationMinutes` (default: `10`). Override locally via:
+
+- `appsettings.Development.json` (already set to `5` for dev)
+- Shell env var before running the API:
+
+  ```bash
+  # bash/zsh
+  export Presentation__DurationMinutes=5
+  dotnet run --project src/HackathonVotingApp.Api
+
+  # PowerShell
+  $env:Presentation__DurationMinutes = "5"
+  dotnet run --project src/HackathonVotingApp.Api
+  ```
+
+The frontend reads the duration from the API at runtime — no frontend env var needed.

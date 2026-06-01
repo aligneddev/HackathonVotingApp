@@ -92,7 +92,7 @@ public class VotingServiceTests
     [Theory]
     [InlineData("ALICE")]           // letters only now valid
     [InlineData("alice")]           // lowercase normalized to valid
-    [InlineData("TEAM ROCKET")]     // spaces are now valid
+    [InlineData("Your Name")]     // spaces are now valid
     [InlineData("A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1A1")] // 32 chars (max)
     [InlineData("12345670")]        // digits but not sequential
     public async Task SubmitBallotAsync_WithValidToken_ReturnsSuccess(string token)

@@ -3,7 +3,7 @@ import userEvent from "@testing-library/user-event";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import VotingPage from "../pages/VotingPage";
 import * as presentationApiModule from "../api/presentationApi";
-import * as adminVotingApiModule from "../api/adminVotingApi";
+import * as publicVotingApiModule from "../api/publicVotingApi";
 import * as votingApiModule from "../api/votingApi";
 
 vi.mock("../api/presentationApi", () => ({
@@ -12,11 +12,9 @@ vi.mock("../api/presentationApi", () => ({
   },
 }));
 
-vi.mock("../api/adminVotingApi", () => ({
-  adminVotingApi: {
+vi.mock("../api/publicVotingApi", () => ({
+  publicVotingApi: {
     getVotingState: vi.fn(),
-    startVoting: vi.fn(),
-    endVoting: vi.fn(),
   },
 }));
 
@@ -30,9 +28,17 @@ const mockGetPresentations = vi.mocked(
   presentationApiModule.presentationApi.getPresentations,
 );
 const mockGetVotingState = vi.mocked(
-  adminVotingApiModule.adminVotingApi.getVotingState,
+  publicVotingApiModule.publicVotingApi.getVotingState,
 );
 const mockCastBallot = vi.mocked(votingApiModule.votingApi.castBallot);
+
+const defaultVotingState = {
+  isOpen: true,
+  currentPresentationId: null,
+  currentPresentationTitle: null,
+  presentationStartedAt: null,
+  durationMinutes: 5,
+};
 
 describe("VotingPage", () => {
   beforeEach(() => {
@@ -50,9 +56,9 @@ describe("VotingPage", () => {
         createdAt: new Date().toISOString(),
       },
     ]);
-    mockGetVotingState.mockResolvedValueOnce({
+    mockGetVotingState.mockResolvedValue({
+      ...defaultVotingState,
       isOpen: false,
-      updatedAt: new Date().toISOString(),
     });
 
     render(<VotingPage />);
@@ -67,7 +73,7 @@ describe("VotingPage", () => {
 
   it("submits_rankings_as_single_ballot", async () => {
     const user = userEvent.setup();
-    const voterAlias = "Team Rocket";
+    const voterAlias = "Your Name";
     mockGetPresentations.mockResolvedValueOnce([
       {
         id: "p-1",
@@ -84,10 +90,7 @@ describe("VotingPage", () => {
         createdAt: new Date().toISOString(),
       },
     ]);
-    mockGetVotingState.mockResolvedValueOnce({
-      isOpen: true,
-      updatedAt: new Date().toISOString(),
-    });
+    mockGetVotingState.mockResolvedValue(defaultVotingState);
     mockCastBallot.mockResolvedValueOnce(undefined);
 
     render(<VotingPage />);
@@ -101,6 +104,61 @@ describe("VotingPage", () => {
         { presentationId: "p-1", ranking: 1, notes: undefined },
         { presentationId: "p-2", ranking: 2, notes: undefined },
       ]);
+    });
+  });
+
+  it("shows_current_presentation_banner_with_title", async () => {
+    mockGetPresentations.mockResolvedValueOnce([
+      {
+        id: "p-1",
+        title: "Demo",
+        presenterName: "Han",
+        description: "",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    const startedAt = new Date(Date.now() - 30_000).toISOString();
+    mockGetVotingState.mockResolvedValue({
+      isOpen: true,
+      currentPresentationId: "p-1",
+      currentPresentationTitle: "Demo",
+      presentationStartedAt: startedAt,
+      durationMinutes: 5,
+    });
+
+    render(<VotingPage />);
+
+    expect(await screen.findByText(/now presenting/i)).toBeInTheDocument();
+    expect(
+      screen.getAllByText("Demo").length,
+    ).toBeGreaterThanOrEqual(1);
+  });
+
+  it("shows_countdown_timer_when_presentation_active", async () => {
+    mockGetPresentations.mockResolvedValueOnce([
+      {
+        id: "p-1",
+        title: "My Talk",
+        presenterName: "Luke",
+        description: "",
+        createdAt: new Date().toISOString(),
+      },
+    ]);
+    const startedAt = new Date(Date.now() - 60_000).toISOString();
+    mockGetVotingState.mockResolvedValue({
+      isOpen: true,
+      currentPresentationId: "p-1",
+      currentPresentationTitle: "My Talk",
+      presentationStartedAt: startedAt,
+      durationMinutes: 5,
+    });
+
+    render(<VotingPage />);
+
+    await waitFor(() => {
+      const timer = screen.getByLabelText(/remaining/i);
+      expect(timer).toBeInTheDocument();
+      expect(timer.textContent).toMatch(/^\d+:\d{2}$/);
     });
   });
 });
