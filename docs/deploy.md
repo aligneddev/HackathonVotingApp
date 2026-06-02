@@ -7,7 +7,7 @@ This document covers Azure setup, GitHub secrets, and the dev/prod deployment fl
 | Component | Azure Service | Tier |
 |---|---|---|
 | React frontend | Azure Static Web Apps | Free |
-| .NET 10 API | Azure App Service (Linux) | F1 Free |
+| .NET 10 API | Azure App Service (Linux) | F1 Free (dev) / B1 Basic (prod) |
 | Database | Azure SQL Serverless (GP_S_Gen5_1) | ~$0 when idle |
 
 Infrastructure is defined in Bicep and deployed through [.github/workflows/ci.yml](../.github/workflows/ci.yml).
@@ -74,6 +74,9 @@ az ad app create --display-name "kl-hackathon-voting-gh-actions"
 APP_ID=$(az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv)
 SP_OBJECT_ID=$(az ad sp create --id "$APP_ID" --query id -o tsv)
 ```
+
+Get the app client id
+```APP_ID=$(az ad app list --display-name "kl-hackathon-voting-gh-actions" --query "[0].appId" -o tsv)```
 
 ### 3. Assign Contributor on the resource group
 
@@ -219,3 +222,6 @@ Presentation duration is read by the API from `Presentation:DurationMinutes` (de
   ```
 
 The frontend reads the duration from the API at runtime — no frontend env var needed.
+
+
+## App Client Id

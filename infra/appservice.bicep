@@ -18,12 +18,15 @@ var corsOriginSettings = [for (origin, i) in corsOrigins: {
   value: origin
 }]
 
+var skuName = environmentName == 'prod' ? 'B1' : 'F1'
+var skuTier = environmentName == 'prod' ? 'Basic' : 'Free'
+
 resource appServicePlan 'Microsoft.Web/serverfarms@2024-11-01' = {
   name: planName
   location: location
   sku: {
-    name: 'F1' // Free tier
-    tier: 'Free'
+    name: skuName
+    tier: skuTier
   }
   kind: 'linux'
   properties: {
