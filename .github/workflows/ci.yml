@@ -200,6 +200,7 @@ jobs:
     name: Deploy Prod — Azure Infrastructure (Bicep)
     needs: [build-and-test-api, build-and-test-frontend]
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.target_environment == 'prod' && github.event.inputs.confirm_production == 'true'
+    environment: prod
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -230,6 +231,7 @@ jobs:
             environmentName=prod
             appName=${{ env.AZURE_APP_NAME }}
             sqlAdminPassword=${{ secrets[format('{0}', 'SQL_ADMIN_PASSWORD_PROD')] }}
+            extraCorsOrigin=${{ vars.EXTRA_CORS_ORIGINS }}
 
   deploy-api-prod:
     name: Deploy Prod — .NET API → App Service
