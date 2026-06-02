@@ -133,6 +133,7 @@ jobs:
   deploy-api-dev:
     name: Deploy Dev — .NET API → App Service
     needs: deploy-infra-dev
+    environment: dev
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -234,6 +235,7 @@ jobs:
     name: Deploy Prod — .NET API → App Service
     needs: deploy-infra-prod
     if: github.event_name == 'workflow_dispatch' && github.event.inputs.target_environment == 'prod' && github.event.inputs.confirm_production == 'true'
+    environment: prod
     runs-on: ubuntu-latest
     permissions:
       id-token: write
